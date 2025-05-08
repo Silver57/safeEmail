@@ -2,6 +2,19 @@ import streamlit as st
 import re
 import pandas as pd
 from datetime import datetime
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# SMTP Configuration
+smtplib.SMTP('smtp.sapo.pt', 587)
+SMTP_USERNAME = "senhor.frogs.racing@sapo.pt"
+SMTP_PASSWORD = "Nazare2024!"
 
 # Set page config
 st.set_page_config(
@@ -116,8 +129,8 @@ if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 if 'current_user' not in st.session_state:
     st.session_state.current_user = None
-if 'show_compose' not in st.session_state:
-    st.session_state.show_compose = False
+if 'current_view' not in st.session_state:
+    st.session_state.current_view = 'inbox'  # Default view
 if 'selected_email' not in st.session_state:
     st.session_state.selected_email = None
 
@@ -156,9 +169,26 @@ def register(email, password):
 
 def load_emails():
     try:
-        return pd.read_csv('emails.csv')
+        emails_df = pd.read_csv('emails.csv')
+        # Add is_trash column if it doesn't exist
+        if 'is_trash' not in emails_df.columns:
+            emails_df['is_trash'] = False
+            emails_df.to_csv('emails.csv', index=False)
+        # Add is_draft column if it doesn't exist
+        if 'is_draft' not in emails_df.columns:
+            emails_df['is_draft'] = False
+            emails_df.to_csv('emails.csv', index=False)
+        return emails_df
     except:
-        return pd.DataFrame(columns=['from', 'to', 'subject', 'date', 'content', 'status'])
+        return pd.DataFrame(columns=['from', 'to', 'subject', 'date', 'content', 'status', 'is_trash', 'is_draft'])
+
+def move_to_trash(email_id):
+    emails_df = load_emails()
+    if email_id in emails_df.index:
+        emails_df.at[email_id, 'is_trash'] = True
+        emails_df.to_csv('emails.csv', index=False)
+        st.session_state.selected_email = None
+        st.rerun()
 
 def display_email_list(emails, selected_id=None, unread_ids=None, list_type='received'):
     for idx, email in emails.iterrows():
@@ -178,7 +208,7 @@ def display_email_list(emails, selected_id=None, unread_ids=None, list_type='rec
         if st.button(btn_label, key=btn_key, use_container_width=True):
             st.session_state.selected_email = idx
 
-def display_email_detail(email):
+def display_email_detail(email, email_id, show_trash_button=False):
     st.markdown(f'''
     <div class="email-detail-box">
         <h2 style="margin-bottom: 0.2em;">{email['subject']}</h2>
@@ -186,25 +216,114 @@ def display_email_detail(email):
         <div style="margin-top: 1em; font-size: 1.1em;">{email['content']}</div>
     </div>
     ''', unsafe_allow_html=True)
-
-def compose_email():
-    st.markdown("### ✍️ Write New Email")
-    to_email = st.text_input("To:")
-    subject = st.text_input("Subject:")
-    content = st.text_area("Message:", height=200)
     
     col1, col2 = st.columns([1, 5])
     with col1:
+        if show_trash_button:
+            if st.button("🗑️ Move to Trash", key=f"trash_{email_id}"):
+                move_to_trash(email_id)
+    with col2:
+        if st.button("✉️ Respond", key=f"respond_{email_id}"):
+            st.session_state.compose_data = {
+                'to': email['from'],
+                'subject': f"Re: {email['subject']}",
+                'content': f"\n\nOn {email['date']}, {email['from']} wrote:\n{email['content']}"
+            }
+            st.session_state.current_view = 'compose'
+            st.rerun()
+
+def save_draft(to_email, subject, content):
+    emails_df = load_emails()
+    new_draft = {
+        'from': st.session_state.current_user,
+        'to': to_email,
+        'subject': subject,
+        'date': datetime.now().strftime("%Y-%m-%d %H:%M"),
+        'content': content,
+        'status': 'draft',
+        'is_trash': False,
+        'is_draft': True
+    }
+    emails_df = pd.concat([emails_df, pd.DataFrame([new_draft])], ignore_index=True)
+    emails_df.to_csv('emails.csv', index=False)
+    st.success("Draft saved successfully!")
+    st.session_state.current_view = 'drafts'
+    st.rerun()
+
+def send_email(to_email, subject, content):
+    try:
+        # Create message
+        msg = MIMEMultipart()
+        msg['From'] = SMTP_USERNAME
+        msg['To'] = to_email
+        msg['Subject'] = subject
+
+        # Add body
+        msg.attach(MIMEText(content, 'plain'))
+
+        # Create SMTP session
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()  # Enable TLS
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(msg)
+            server.quit()
+        return True, "Email sent successfully!"
+    except Exception as e:
+        return False, f"Failed to send email: {str(e)}"
+
+def compose_email():
+    st.markdown("### ✍️ Write New Email")
+    
+    # Get pre-filled data if available
+    compose_data = st.session_state.get('compose_data', {})
+    to_email = st.text_input("To:", value=compose_data.get('to', ''))
+    subject = st.text_input("Subject:", value=compose_data.get('subject', ''))
+    content = st.text_area("Message:", value=compose_data.get('content', ''), height=200)
+    
+    col1, col2, col3 = st.columns([1, 1, 4])
+    with col1:
         if st.button("Send", key="send_email"):
             if to_email and subject and content:
-                st.success("Email sent successfully!")
-                st.session_state.show_compose = False
-                st.rerun()
+                # Send actual email
+                success, message = send_email(to_email, subject, content)
+                if success:
+                    st.success(message)
+                    # Save to sent items
+                    emails_df = load_emails()
+                    new_email = {
+                        'from': SMTP_USERNAME,
+                        'to': to_email,
+                        'subject': subject,
+                        'date': datetime.now().strftime("%Y-%m-%d %H:%M"),
+                        'content': content,
+                        'status': 'sent',
+                        'is_trash': False,
+                        'is_draft': False
+                    }
+                    emails_df = pd.concat([emails_df, pd.DataFrame([new_email])], ignore_index=True)
+                    emails_df.to_csv('emails.csv', index=False)
+                    
+                    # Clear compose data
+                    if 'compose_data' in st.session_state:
+                        del st.session_state.compose_data
+                    st.session_state.current_view = 'inbox'
+                    st.rerun()
+                else:
+                    st.error(message)
             else:
                 st.error("Please fill in all fields!")
     with col2:
+        if st.button("Save Draft", key="save_draft"):
+            save_draft(to_email, subject, content)
+            # Clear compose data
+            if 'compose_data' in st.session_state:
+                del st.session_state.compose_data
+    with col3:
         if st.button("Cancel", key="cancel_email"):
-            st.session_state.show_compose = False
+            # Clear compose data
+            if 'compose_data' in st.session_state:
+                del st.session_state.compose_data
+            st.session_state.current_view = 'inbox'
             st.rerun()
 
 def inbox_page():
@@ -214,14 +333,26 @@ def inbox_page():
         st.markdown("---")
         
         if st.button("✉️ Compose New Email", key="compose_button", use_container_width=True):
-            st.session_state.show_compose = True
+            st.session_state.current_view = 'compose'
             st.rerun()
         
         st.markdown("### 📁 Folders")
-        st.button("📥 Inbox", use_container_width=True)
-        st.button("📤 Sent", use_container_width=True)
-        st.button("📝 Drafts", use_container_width=True)
-        st.button("🗑️ Trash", use_container_width=True)
+        if st.button("📥 Inbox", use_container_width=True):
+            st.session_state.current_view = 'inbox'
+            st.session_state.selected_email = None
+            st.rerun()
+        if st.button("📤 Sent", use_container_width=True):
+            st.session_state.current_view = 'sent'
+            st.session_state.selected_email = None
+            st.rerun()
+        if st.button("📝 Drafts", use_container_width=True):
+            st.session_state.current_view = 'drafts'
+            st.session_state.selected_email = None
+            st.rerun()
+        if st.button("🗑️ Trash", use_container_width=True):
+            st.session_state.current_view = 'trash'
+            st.session_state.selected_email = None
+            st.rerun()
         
         st.markdown("---")
         if st.button("🚪 Logout", use_container_width=True):
@@ -230,28 +361,69 @@ def inbox_page():
             st.rerun()
 
     # Main content
-    if st.session_state.show_compose:
+    if st.session_state.current_view == 'compose':
         compose_email()
     else:
-        st.title("📥 Your Inbox")
         emails_df = load_emails()
         user_email = st.session_state.current_user
-        received_emails = emails_df[emails_df['to'] == user_email].sort_values('date', ascending=False)
-        sent_emails = emails_df[emails_df['from'] == user_email].sort_values('date', ascending=False)
-        # For demo, all received emails are unread except the first one
-        unread_ids = set(received_emails.index[1:]) if len(received_emails) > 1 else set()
-        selected_id = st.session_state.selected_email
-        col1, col2 = st.columns([2, 3])
-        with col1:
-            st.subheader("📨 Received Emails")
-            display_email_list(received_emails, selected_id, unread_ids, list_type='received')
-            st.subheader("📤 Sent Emails")
-            display_email_list(sent_emails, selected_id, list_type='sent')
-        with col2:
-            if selected_id is not None and selected_id in emails_df.index:
-                display_email_detail(emails_df.loc[selected_id])
-            else:
-                st.markdown('<div style="color:#b0b8c1; font-size:1.2em; margin-top:2em;">Select an email to read it here.</div>', unsafe_allow_html=True)
+        
+        # Filter emails based on view
+        non_trash_emails = emails_df[~emails_df['is_trash'].fillna(False)]
+        received_emails = non_trash_emails[non_trash_emails['to'] == user_email].sort_values('date', ascending=False)
+        sent_emails = non_trash_emails[non_trash_emails['from'] == user_email].sort_values('date', ascending=False)
+        trashed_emails = emails_df[emails_df['is_trash'].fillna(False)].sort_values('date', ascending=False)
+        draft_emails = non_trash_emails[non_trash_emails['is_draft'].fillna(False)].sort_values('date', ascending=False)
+        
+        # Display content based on current view
+        if st.session_state.current_view == 'inbox':
+            st.title("📥 Inbox")
+            # For demo, all received emails are unread except the first one
+            unread_ids = set(received_emails.index[1:]) if len(received_emails) > 1 else set()
+            selected_id = st.session_state.selected_email
+            col1, col2 = st.columns([2, 3])
+            with col1:
+                display_email_list(received_emails, selected_id, unread_ids, list_type='received')
+            with col2:
+                if selected_id is not None and selected_id in emails_df.index:
+                    display_email_detail(emails_df.loc[selected_id], selected_id, show_trash_button=True)
+                else:
+                    st.markdown('<div style="color:#b0b8c1; font-size:1.2em; margin-top:2em;">Select an email to read it here.</div>', unsafe_allow_html=True)
+        
+        elif st.session_state.current_view == 'sent':
+            st.title("📤 Sent Emails")
+            selected_id = st.session_state.selected_email
+            col1, col2 = st.columns([2, 3])
+            with col1:
+                display_email_list(sent_emails, selected_id, list_type='sent')
+            with col2:
+                if selected_id is not None and selected_id in emails_df.index:
+                    display_email_detail(emails_df.loc[selected_id], selected_id, show_trash_button=False)
+                else:
+                    st.markdown('<div style="color:#b0b8c1; font-size:1.2em; margin-top:2em;">Select an email to read it here.</div>', unsafe_allow_html=True)
+        
+        elif st.session_state.current_view == 'drafts':
+            st.title("📝 Drafts")
+            selected_id = st.session_state.selected_email
+            col1, col2 = st.columns([2, 3])
+            with col1:
+                display_email_list(draft_emails, selected_id, list_type='drafts')
+            with col2:
+                if selected_id is not None and selected_id in emails_df.index:
+                    display_email_detail(emails_df.loc[selected_id], selected_id, show_trash_button=False)
+                else:
+                    st.markdown('<div style="color:#b0b8c1; font-size:1.2em; margin-top:2em;">Select a draft to view it here.</div>', unsafe_allow_html=True)
+        
+        elif st.session_state.current_view == 'trash':
+            st.title("🗑️ Trash")
+            selected_id = st.session_state.selected_email
+            col1, col2 = st.columns([2, 3])
+            with col1:
+                display_email_list(trashed_emails, selected_id, list_type='trash')
+            with col2:
+                if selected_id is not None and selected_id in emails_df.index:
+                    display_email_detail(emails_df.loc[selected_id], selected_id, show_trash_button=False)
+                else:
+                    st.markdown('<div style="color:#b0b8c1; font-size:1.2em; margin-top:2em;">Select an email to view it here.</div>', unsafe_allow_html=True)
 
 def parent_dashboard():
     st.title("👨‍👩‍👧‍👦 Parent Dashboard")

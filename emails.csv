@@ -1,9 +1,10 @@
-from,to,subject,date,content,status
-Santa@northpole.com,test@example.com,Your Christmas Wish List,2024-03-20,Hi! I received your Christmas wish list. I'll do my best to bring your favorite toys!,received
-Mom@family.com,test@example.com,Homework Reminder,2024-03-19,Don't forget to finish your math homework before dinner!,received
-Teacher@school.com,test@example.com,Great Job on Science Project!,2024-03-18,Your volcano project was amazing! You got an A+!,received
-Friend@play.com,test@example.com,Playdate This Weekend?,2024-03-17,Want to come over and play with my new LEGO set?,received
-Grandma@family.com,test@example.com,Your Birthday Present,2024-03-16,I'm sending you a special surprise for your birthday!,received
-test@example.com,Teacher@school.com,Science Project Question,2024-03-15,Can I use food coloring in my volcano project?,sent
-test@example.com,Mom@family.com,Can I Have a Pet?,2024-03-14,Please can I get a puppy? I promise to take care of it!,sent
-test@example.com,Friend@play.com,Thanks for the Playdate,2024-03-13,Thanks for having me over! The LEGO set was awesome!,sent 
+from,to,subject,date,content,status,is_trash,is_draft
+Santa@northpole.com,test@example.com,Your Christmas Wish List,2024-03-20,Hi! I received your Christmas wish list. I'll do my best to bring your favorite toys!,received,True,False
+Mom@family.com,test@example.com,Homework Reminder,2024-03-19,Don't forget to finish your math homework before dinner!,received,False,False
+Teacher@school.com,test@example.com,Great Job on Science Project!,2024-03-18,Your volcano project was amazing! You got an A+!,received,False,False
+Friend@play.com,test@example.com,Playdate This Weekend?,2024-03-17,Want to come over and play with my new LEGO set?,received,False,False
+Grandma@family.com,test@example.com,Your Birthday Present,2024-03-16,I'm sending you a special surprise for your birthday!,received,True,False
+test@example.com,Teacher@school.com,Science Project Question,2024-03-15,Can I use food coloring in my volcano project?,sent,False,False
+test@example.com,Mom@family.com,Can I Have a Pet?,2024-03-14,Please can I get a puppy? I promise to take care of it!,sent,False,False
+test@example.com,Friend@play.com,Thanks for the Playdate,2024-03-13,Thanks for having me over! The LEGO set was awesome!,sent ,False,False
+test@example.com,lsdnds@lkdw,ededw,2025-05-07 22:39,ewddewdewddwedew,draft,False,True

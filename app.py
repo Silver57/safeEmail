@@ -9,9 +9,10 @@ import os
 
 
 # SMTP Configuration
-smtplib.SMTP('smtp.sapo.pt', 587)
 SMTP_USERNAME = "senhor.frogs.racing@sapo.pt"
 SMTP_PASSWORD = "Nazare2024!"
+SMTP_SERVER = "smtp.sapo.pt"
+SMTP_PORT = 587
 
 # Set page config
 st.set_page_config(
@@ -248,22 +249,39 @@ def save_draft(to_email, subject, content):
     st.rerun()
 
 def send_email(to_email, subject, content):
+    # Create message
+    msg = MIMEMultipart()
+    msg['From'] = SMTP_USERNAME
+    msg['To'] = to_email
+    msg['Subject'] = subject
+
+    # Add body
+    msg.attach(MIMEText(content, 'plain'))
+
     try:
-        # Create message
-        msg = MIMEMultipart()
-        msg['From'] = SMTP_USERNAME
-        msg['To'] = to_email
-        msg['Subject'] = subject
-
-        # Add body
-        msg.attach(MIMEText(content, 'plain'))
-
         # Create SMTP session
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls()  # Enable TLS
-            server.login(SMTP_USERNAME, SMTP_PASSWORD)
-            server.send_message(msg)
-            server.quit()
+        server = smtplib.SMTP('smtp.sapo.pt', 587)
+        server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        text = msg.as_string()
+        server.sendmail(SMTP_USERNAME, to_email, text)
+        server.quit()
+        
+        # Save to sent items
+        emails_df = load_emails()
+        new_email = {
+            'from': SMTP_USERNAME,
+            'to': to_email,
+            'subject': subject,
+            'date': datetime.now().strftime("%Y-%m-%d %H:%M"),
+            'content': content,
+            'status': 'sent',
+            'is_trash': False,
+            'is_draft': False
+        }
+        emails_df = pd.concat([emails_df, pd.DataFrame([new_email])], ignore_index=True)
+        emails_df.to_csv('emails.csv', index=False)
+        
         return True, "Email sent successfully!"
     except Exception as e:
         return False, f"Failed to send email: {str(e)}"
@@ -367,7 +385,7 @@ def inbox_page():
         # Filter emails based on view
         non_trash_emails = emails_df[~emails_df['is_trash'].fillna(False)]
         received_emails = non_trash_emails[non_trash_emails['to'] == user_email].sort_values('date', ascending=False)
-        sent_emails = non_trash_emails[non_trash_emails['from'] == user_email].sort_values('date', ascending=False)
+        sent_emails = non_trash_emails[non_trash_emails['from'] == SMTP_USERNAME].sort_values('date', ascending=False)
         trashed_emails = emails_df[emails_df['is_trash'].fillna(False)].sort_values('date', ascending=False)
         draft_emails = non_trash_emails[non_trash_emails['is_draft'].fillna(False)].sort_values('date', ascending=False)
         
@@ -423,23 +441,176 @@ def inbox_page():
                     st.markdown('<div style="color:#b0b8c1; font-size:1.2em; margin-top:2em;">Select an email to view it here.</div>', unsafe_allow_html=True)
 
 def parent_dashboard():
-    st.title("👨‍👩‍👧‍👦 Parent Dashboard")
-    st.markdown("""
-    <div style='background:#23272b; padding:2em; border-radius:10px; color:#fff;'>
-        <h2>Welcome, Parent!</h2>
-        <p>This is your special dashboard. Here you can monitor your child's inbox, set rules, and more features coming soon!</p>
-        <ul>
-            <li>🔍 View your child's recent emails</li>
-            <li>🛡️ Set safety rules</li>
-            <li>📊 See activity reports</li>
-        </ul>
-        <p style='color:#b0b8c1;'>This is a demo parent interface. More features can be added as needed.</p>
-    </div>
-    """, unsafe_allow_html=True)
-    if st.button("🚪 Logout", use_container_width=True):
-        st.session_state.authenticated = False
-        st.session_state.current_user = None
-        st.rerun()
+    # Sidebar navigation
+    with st.sidebar:
+        st.title("👨‍👩‍👧‍👦 Parent Dashboard")
+        st.markdown("---")
+        
+        # Navigation buttons
+        if st.button("📊 Overview", use_container_width=True):
+            st.session_state.parent_view = 'overview'
+            st.rerun()
+        if st.button("❤️ Wellbeing", use_container_width=True):
+            st.session_state.parent_view = 'wellbeing'
+            st.rerun()
+        if st.button("🧠 Smart Parenting", use_container_width=True):
+            st.session_state.parent_view = 'smart_parenting'
+            st.rerun()
+        
+        st.markdown("---")
+        if st.button("🚪 Logout", use_container_width=True):
+            st.session_state.authenticated = False
+            st.session_state.current_user = None
+            st.rerun()
+
+    # Initialize parent view if not set
+    if 'parent_view' not in st.session_state:
+        st.session_state.parent_view = 'overview'
+
+    # Main content based on selected view
+    if st.session_state.parent_view == 'overview':
+        st.title("📊 Overview")
+        st.markdown("""
+        <div style='background:#23272b; padding:2em; border-radius:10px; color:#fff;'>
+            <h2>Activity Overview</h2>
+            <div style='display: grid; grid-template-columns: repeat(3, 1fr); gap: 1em; margin-top: 1em;'>
+                <div style='background:#2d333b; padding:1em; border-radius:8px;'>
+                    <h3>📧 Emails</h3>
+                    <p>Total: 24</p>
+                    <p>Today: 3</p>
+                </div>
+                <div style='background:#2d333b; padding:1em; border-radius:8px;'>
+                    <h3>⏰ Screen Time</h3>
+                    <p>Today: 2h 15m</p>
+                    <p>Weekly Avg: 1h 45m</p>
+                </div>
+                <div style='background:#2d333b; padding:1em; border-radius:8px;'>
+                    <h3>🔍 Safety Score</h3>
+                    <p>Current: 92/100</p>
+                    <p>Trend: ↗️ Improving</p>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    elif st.session_state.parent_view == 'wellbeing':
+        st.title("❤️ Wellbeing")
+        
+        # Create three columns for the modules
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("### ⚠️ Risk Assessment")
+            st.write("**Violence**")
+            st.progress(75)
+            st.markdown("<span style='color:#ff6b6b;'>High (75%)</span>", unsafe_allow_html=True)
+
+            st.write("**Self-harm**")
+            st.progress(45)
+            st.markdown("<span style='color:#ffd93d;'>Medium (45%)</span>", unsafe_allow_html=True)
+
+            st.write("**Sexual Content**")
+            st.progress(15)
+            st.markdown("<span style='color:#4cd137;'>Low (15%)</span>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("""
+            <div style='background:#23272b; padding:1.5em; border-radius:10px; color:#fff; height:100%;'>
+                <h3>🎭 Communication Tone</h3>
+                <div style='margin-top:1em;'>
+                    <div style='margin-bottom:1em;'>
+                        <h4 style='color:#b0b8c1; margin-bottom:0.5em;'>Overall Tone</h4>
+                        <p style='color:#4cd137;'>• Generally positive and respectful</p>
+                        <p style='color:#ffd93d;'>• Some instances of frustration</p>
+                    </div>
+                    <div style='margin-bottom:1em;'>
+                        <h4 style='color:#b0b8c1; margin-bottom:0.5em;'>Language Patterns</h4>
+                        <p>• Formal in academic contexts</p>
+                        <p>• Casual with peers</p>
+                    </div>
+                    <div>
+                        <h4 style='color:#b0b8c1; margin-bottom:0.5em;'>Key Insights</h4>
+                        <p>• Increased formality in recent weeks</p>
+                        <p>• Improved conflict resolution</p>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:        
+            st.markdown("""
+            <div style='background:#23272b; padding:1.5em; border-radius:10px; color:#fff; height:100%;'>
+                <h3>📊 Sentiment Analysis</h3>
+                <div style='margin-top:1em; text-align:center;'>
+                    <div style='font-size:2.5em; margin:0.2em 0; color:#4cd137;'>7.8</div>
+                    <div style='color:#b0b8c1; margin-bottom:1em;'>Overall Sentiment Score</div>
+                    <div style='background:#1c1f23; height:8px; border-radius:4px; margin:1em 0;'>
+                        <div style='background:#4cd137; width:78%; height:100%; border-radius:4px;'></div>
+                    </div>
+                    <div style='text-align:left; margin-top:1em;'>
+                        <p>• Positive: 65%</p>
+                        <p>• Neutral: 25%</p>
+                        <p>• Negative: 10%</p>
+                    </div>
+                <span style='color:#b0b8c1; font-size:0.98em;'>
+                    The scores below represent the estimated probability that the student has been exposed to or engaged in each category based on recent email activity. Higher scores indicate greater risk and may warrant closer attention.
+                </span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    elif st.session_state.parent_view == 'smart_parenting':
+        st.title("🧠 Smart Parenting")
+        st.markdown("""
+        <div style='background:#23272b; padding:2em; border-radius:10px; color:#fff;'>
+            <h2>Smart Parenting Assistant</h2>
+            <p style='color:#b0b8c1;'>Ask questions and get tips on how to help your child thrive online and offline.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Initialize chat history in session state
+        if 'parent_chat_history' not in st.session_state:
+            st.session_state.parent_chat_history = [
+                {"role": "assistant", "content": "Hello! I'm here to help you with parenting tips and advice. How can I assist you today?"}
+            ]
+
+        # Display chat history
+        for msg in st.session_state.parent_chat_history:
+            if msg["role"] == "parent":
+                st.markdown(f"<div style='background:#2962ff; color:#fff; padding:0.7em 1em; border-radius:8px; margin:0.5em 0 0.5em auto; max-width:70%; text-align:right;'><b>You:</b> {msg['content']}</div>", unsafe_allow_html=True)
+            else:
+                st.markdown(f"<div style='background:#23272b; color:#fff; padding:0.7em 1em; border-radius:8px; margin:0.5em auto 0.5em 0; max-width:70%; text-align:left; border:1px solid #444c56;'><b>Assistant:</b> {msg['content']}</div>", unsafe_allow_html=True)
+
+        # Input for new question
+        with st.form(key="parent_chat_form", clear_on_submit=True):
+            user_input = st.text_input("Type your question here...", key="parent_chat_input")
+            submitted = st.form_submit_button("Send")
+            if submitted and user_input.strip():
+                # Add parent message
+                st.session_state.parent_chat_history.append({"role": "parent", "content": user_input.strip()})
+                # Generate a simple tip/response (placeholder logic)
+                response = generate_parenting_tip(user_input.strip())
+                st.session_state.parent_chat_history.append({"role": "assistant", "content": response})
+                st.rerun()
+
+# Helper function for parenting tips
+
+def generate_parenting_tip(question):
+    # Placeholder: simple keyword-based tips
+    q = question.lower()
+    if "screen time" in q:
+        return "It's important to set healthy boundaries for screen time. Consider creating device-free zones and times at home."
+    elif "bullying" in q:
+        return "If you suspect bullying, encourage open communication and reassure your child that they can talk to you about anything."
+    elif "internet safety" in q or "online safety" in q:
+        return "Teach your child about privacy, not sharing personal info, and how to recognize suspicious online behavior."
+    elif "motivation" in q or "study" in q:
+        return "Help your child set achievable goals and celebrate their progress. A consistent routine can boost motivation."
+    elif "friend" in q or "social" in q:
+        return "Encourage positive social interactions and help your child navigate friendships with empathy and respect."
+    else:
+        return "That's a great question! Encourage open dialogue, set clear expectations, and support your child's growth. If you have a specific concern, let me know!"
 
 # Main app logic
 if not st.session_state.authenticated:

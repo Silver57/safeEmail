@@ -1,13 +1,10 @@
-from,to,subject,date,content,status,is_trash,is_draft
-Santa@northpole.com,test@example.com,Your Christmas Wish List,2024-03-20,Hi! I received your Christmas wish list. I'll do my best to bring your favorite toys!,received,True,False
-Mom@family.com,test@example.com,Homework Reminder,2024-03-19,Don't forget to finish your math homework before dinner!,received,False,False
-Teacher@school.com,test@example.com,Great Job on Science Project!,2024-03-18,Your volcano project was amazing! You got an A+!,received,False,False
-Friend@play.com,test@example.com,Playdate This Weekend?,2024-03-17,Want to come over and play with my new LEGO set?,received,False,False
-Grandma@family.com,test@example.com,Your Birthday Present,2024-03-16,I'm sending you a special surprise for your birthday!,received,True,False
-test@example.com,Teacher@school.com,Science Project Question,2024-03-15,Can I use food coloring in my volcano project?,sent,False,False
-test@example.com,Mom@family.com,Can I Have a Pet?,2024-03-14,Please can I get a puppy? I promise to take care of it!,sent,False,False
-test@example.com,Friend@play.com,Thanks for the Playdate,2024-03-13,Thanks for having me over! The LEGO set was awesome!,sent ,False,False
-test@example.com,lsdnds@lkdw,ededw,2025-05-07 22:39,ewddewdewddwedew,draft,False,True
-senhor.frogs.racing@sapo.pt,luispis@sapo.pt,Teste,2025-05-08 11:55,teste,sent,False,False
-senhor.frogs.racing@sapo.pt,luispis@sapo.pt,Testing,2025-05-08 11:58,Got into uni! ,sent,False,False
-senhor.frogs.racing@sapo.pt,luispis@sapo.pt,Testing,2025-05-08 11:58,Got into uni! ,sent,False,False
+from,to,subject,date,content,status,is_trash,is_draft,sentiment_score
+Santa@northpole.com,test@example.com,Your Christmas Wish List,2024-03-20,Hi! I received your Christmas wish list. I'll do my best to bring your favorite toys!,received,True,False,9.986444115638731
+Mom@family.com,test@example.com,Homework Reminder,2024-03-19,Don't forget to finish your math homework before dinner!,received,False,False,9.986091256141664
+Teacher@school.com,test@example.com,Great Job on Science Project!,2024-03-18,Your volcano project was amazing! You got an A+!,received,False,False,9.98872458934784
+Friend@play.com,test@example.com,Playdate This Weekend?,2024-03-17,Want to come over and play with my new LEGO set?,received,False,False,9.986740350723268
+Grandma@family.com,test@example.com,Your Birthday Present,2024-03-16,I'm sending you a special surprise for your birthday!,received,True,False,9.988129138946531
+test@example.com,Teacher@school.com,Science Project Question,2024-03-15,Do you fucking think that is good ideia idiot ? Lil Bitch,sent,False,False,
+test@example.com,Teacher@school.com,Science Project Question,2024-03-15,Do you fucking think that is good ideia idiot ? Lil Bitch,sent,False,False,
+senhor.frogs.racing@sapo.pt,luispis@sapo.pt,F U,2025-05-12 15:38,"Hey lil bitch, what's up ?",sent,False,False,9.96228814125061
+senhor.frogs.racing@sapo.pt,luispis@sapo.pt,You are kind of dumb,2025-05-12 15:50,You are kind of dumb and not very helpful ,sent,False,False,0.005004405975341797

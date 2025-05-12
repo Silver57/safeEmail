@@ -6,7 +6,26 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
+from transformers import pipeline
 
+# Initialize sentiment analysis pipeline
+@st.cache_resource
+def load_sentiment_analyzer():
+    return pipeline("sentiment-analysis", model="siebert/sentiment-roberta-large-english")
+
+def analyze_email_sentiment(content):
+    try:
+        sentiment_analyzer = load_sentiment_analyzer()
+        result = sentiment_analyzer(content)
+        # Convert sentiment to a score between 0 and 10
+        score = float(result[0]['score']) * 10
+        print("Sentiment", score)
+        if result[0]['label'] == 'NEGATIVE':
+            score = 10 - score
+        return score
+    except Exception as e:
+        st.error(f"Error analyzing sentiment: {str(e)}")
+        return None
 
 # SMTP Configuration
 SMTP_USERNAME = "senhor.frogs.racing@sapo.pt"
@@ -176,9 +195,18 @@ def load_emails():
         if 'is_draft' not in emails_df.columns:
             emails_df['is_draft'] = False
             emails_df.to_csv('emails.csv', index=False)
+        # Add sentiment_score column if it doesn't exist
+        if 'sentiment_score' not in emails_df.columns:
+            emails_df['sentiment_score'] = None
+            # Analyze sentiment for existing emails
+            for idx, row in emails_df.iterrows():
+                if pd.isna(row['sentiment_score']):
+                    score = analyze_email_sentiment(row['content'])
+                    emails_df.at[idx, 'sentiment_score'] = score
+            emails_df.to_csv('emails.csv', index=False)
         return emails_df
     except:
-        return pd.DataFrame(columns=['from', 'to', 'subject', 'date', 'content', 'status', 'is_trash', 'is_draft'])
+        return pd.DataFrame(columns=['from', 'to', 'subject', 'date', 'content', 'status', 'is_trash', 'is_draft', 'sentiment_score'])
 
 def move_to_trash(email_id):
     emails_df = load_emails()
@@ -267,6 +295,9 @@ def send_email(to_email, subject, content):
         server.sendmail(SMTP_USERNAME, to_email, text)
         server.quit()
         
+        # Analyze sentiment
+        sentiment_score = analyze_email_sentiment(content)
+        
         # Save to sent items
         emails_df = load_emails()
         new_email = {
@@ -277,7 +308,8 @@ def send_email(to_email, subject, content):
             'content': content,
             'status': 'sent',
             'is_trash': False,
-            'is_draft': False
+            'is_draft': False,
+            'sentiment_score': sentiment_score
         }
         emails_df = pd.concat([emails_df, pd.DataFrame([new_email])], ignore_index=True)
         emails_df.to_csv('emails.csv', index=False)
@@ -303,21 +335,6 @@ def compose_email():
                 success, message = send_email(to_email, subject, content)
                 if success:
                     st.success(message)
-                    # Save to sent items
-                    emails_df = load_emails()
-                    new_email = {
-                        'from': SMTP_USERNAME,
-                        'to': to_email,
-                        'subject': subject,
-                        'date': datetime.now().strftime("%Y-%m-%d %H:%M"),
-                        'content': content,
-                        'status': 'sent',
-                        'is_trash': False,
-                        'is_draft': False
-                    }
-                    emails_df = pd.concat([emails_df, pd.DataFrame([new_email])], ignore_index=True)
-                    emails_df.to_csv('emails.csv', index=False)
-                    
                     # Clear compose data
                     if 'compose_data' in st.session_state:
                         del st.session_state.compose_data
@@ -379,66 +396,84 @@ def inbox_page():
     if st.session_state.current_view == 'compose':
         compose_email()
     else:
-        emails_df = load_emails()
-        user_email = st.session_state.current_user
-        
-        # Filter emails based on view
-        non_trash_emails = emails_df[~emails_df['is_trash'].fillna(False)]
-        received_emails = non_trash_emails[non_trash_emails['to'] == user_email].sort_values('date', ascending=False)
-        sent_emails = non_trash_emails[non_trash_emails['from'] == SMTP_USERNAME].sort_values('date', ascending=False)
-        trashed_emails = emails_df[emails_df['is_trash'].fillna(False)].sort_values('date', ascending=False)
-        draft_emails = non_trash_emails[non_trash_emails['is_draft'].fillna(False)].sort_values('date', ascending=False)
-        
-        # Display content based on current view
-        if st.session_state.current_view == 'inbox':
-            st.title("📥 Inbox")
-            # For demo, all received emails are unread except the first one
-            unread_ids = set(received_emails.index[1:]) if len(received_emails) > 1 else set()
-            selected_id = st.session_state.selected_email
-            col1, col2 = st.columns([2, 3])
-            with col1:
-                display_email_list(received_emails, selected_id, unread_ids, list_type='received')
-            with col2:
-                if selected_id is not None and selected_id in emails_df.index:
-                    display_email_detail(emails_df.loc[selected_id], selected_id, show_trash_button=True)
-                else:
-                    st.markdown('<div style="color:#b0b8c1; font-size:1.2em; margin-top:2em;">Select an email to read it here.</div>', unsafe_allow_html=True)
-        
-        elif st.session_state.current_view == 'sent':
-            st.title("📤 Sent Emails")
-            selected_id = st.session_state.selected_email
-            col1, col2 = st.columns([2, 3])
-            with col1:
-                display_email_list(sent_emails, selected_id, list_type='sent')
-            with col2:
-                if selected_id is not None and selected_id in emails_df.index:
-                    display_email_detail(emails_df.loc[selected_id], selected_id, show_trash_button=False)
-                else:
-                    st.markdown('<div style="color:#b0b8c1; font-size:1.2em; margin-top:2em;">Select an email to read it here.</div>', unsafe_allow_html=True)
-        
-        elif st.session_state.current_view == 'drafts':
-            st.title("📝 Drafts")
-            selected_id = st.session_state.selected_email
-            col1, col2 = st.columns([2, 3])
-            with col1:
-                display_email_list(draft_emails, selected_id, list_type='drafts')
-            with col2:
-                if selected_id is not None and selected_id in emails_df.index:
-                    display_email_detail(emails_df.loc[selected_id], selected_id, show_trash_button=False)
-                else:
-                    st.markdown('<div style="color:#b0b8c1; font-size:1.2em; margin-top:2em;">Select a draft to view it here.</div>', unsafe_allow_html=True)
-        
-        elif st.session_state.current_view == 'trash':
-            st.title("🗑️ Trash")
-            selected_id = st.session_state.selected_email
-            col1, col2 = st.columns([2, 3])
-            with col1:
-                display_email_list(trashed_emails, selected_id, list_type='trash')
-            with col2:
-                if selected_id is not None and selected_id in emails_df.index:
-                    display_email_detail(emails_df.loc[selected_id], selected_id, show_trash_button=False)
-                else:
-                    st.markdown('<div style="color:#b0b8c1; font-size:1.2em; margin-top:2em;">Select an email to view it here.</div>', unsafe_allow_html=True)
+        try:
+            emails_df = load_emails()
+            user_email = st.session_state.current_user
+            
+            # Ensure all required columns exist
+            required_columns = ['from', 'to', 'subject', 'date', 'content', 'status', 'is_trash', 'is_draft', 'sentiment_score']
+            for col in required_columns:
+                if col not in emails_df.columns:
+                    emails_df[col] = None
+            
+            # Filter emails based on view
+            non_trash_emails = emails_df[~emails_df['is_trash'].fillna(False)]
+            received_emails = non_trash_emails[non_trash_emails['to'].str.lower() == user_email.lower()].sort_values('date', ascending=False)
+            sent_emails = non_trash_emails[non_trash_emails['from'].str.lower() == SMTP_USERNAME.lower()].sort_values('date', ascending=False)
+            trashed_emails = emails_df[emails_df['is_trash'].fillna(False)].sort_values('date', ascending=False)
+            draft_emails = non_trash_emails[non_trash_emails['is_draft'].fillna(False)].sort_values('date', ascending=False)
+            
+            # Display content based on current view
+            if st.session_state.current_view == 'inbox':
+                st.title("📥 Inbox")
+                # For demo, all received emails are unread except the first one
+                unread_ids = set(received_emails.index[1:]) if len(received_emails) > 1 else set()
+                selected_id = st.session_state.selected_email
+                col1, col2 = st.columns([2, 3])
+                with col1:
+                    display_email_list(received_emails, selected_id, unread_ids, list_type='received')
+                with col2:
+                    if selected_id is not None and selected_id in emails_df.index:
+                        display_email_detail(emails_df.loc[selected_id], selected_id, show_trash_button=True)
+                    else:
+                        st.markdown('<div style="color:#b0b8c1; font-size:1.2em; margin-top:2em;">Select an email to read it here.</div>', unsafe_allow_html=True)
+            
+            elif st.session_state.current_view == 'sent':
+                st.title("📤 Sent Emails")
+                selected_id = st.session_state.selected_email
+                col1, col2 = st.columns([2, 3])
+                with col1:
+                    display_email_list(sent_emails, selected_id, list_type='sent')
+                with col2:
+                    if selected_id is not None and selected_id in emails_df.index:
+                        display_email_detail(emails_df.loc[selected_id], selected_id, show_trash_button=False)
+                    else:
+                        st.markdown('<div style="color:#b0b8c1; font-size:1.2em; margin-top:2em;">Select an email to read it here.</div>', unsafe_allow_html=True)
+            
+            elif st.session_state.current_view == 'drafts':
+                st.title("📝 Drafts")
+                selected_id = st.session_state.selected_email
+                col1, col2 = st.columns([2, 3])
+                with col1:
+                    display_email_list(draft_emails, selected_id, list_type='drafts')
+                with col2:
+                    if selected_id is not None and selected_id in emails_df.index:
+                        display_email_detail(emails_df.loc[selected_id], selected_id, show_trash_button=False)
+                    else:
+                        st.markdown('<div style="color:#b0b8c1; font-size:1.2em; margin-top:2em;">Select a draft to view it here.</div>', unsafe_allow_html=True)
+            
+            elif st.session_state.current_view == 'trash':
+                st.title("🗑️ Trash")
+                selected_id = st.session_state.selected_email
+                col1, col2 = st.columns([2, 3])
+                with col1:
+                    display_email_list(trashed_emails, selected_id, list_type='trash')
+                with col2:
+                    if selected_id is not None and selected_id in emails_df.index:
+                        display_email_detail(emails_df.loc[selected_id], selected_id, show_trash_button=False)
+                    else:
+                        st.markdown('<div style="color:#b0b8c1; font-size:1.2em; margin-top:2em;">Select an email to view it here.</div>', unsafe_allow_html=True)
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
+            st.error("Please check if the emails.csv file exists and has the correct format.")
+
+def get_risk_level(score):
+    if score >= 70:
+        return "High", "#ff6b6b"
+    elif score >= 40:
+        return "Medium", "#ffd93d"
+    else:
+        return "Low", "#4cd137"
 
 def parent_dashboard():
     # Sidebar navigation
@@ -467,17 +502,59 @@ def parent_dashboard():
     if 'parent_view' not in st.session_state:
         st.session_state.parent_view = 'overview'
 
+    # Load email data
+    try:
+        emails_df = load_emails()
+        total_emails = len(emails_df)
+        today_emails = len(emails_df[emails_df['date'].str.startswith(datetime.now().strftime('%Y-%m-%d'))])
+        
+        # Calculate sentiment statistics
+        sentiment_scores = emails_df['sentiment_score'].dropna()
+        avg_sentiment = sentiment_scores.mean() if not sentiment_scores.empty else 0
+        
+        # Calculate sentiment distribution
+        positive_count = len(sentiment_scores[sentiment_scores >= 7])
+        neutral_count = len(sentiment_scores[(sentiment_scores >= 4) & (sentiment_scores < 7)])
+        negative_count = len(sentiment_scores[sentiment_scores < 4])
+        total_sentiment = len(sentiment_scores)
+        
+        # Calculate percentages
+        positive_pct = (positive_count / total_sentiment * 100) if total_sentiment > 0 else 0
+        neutral_pct = (neutral_count / total_sentiment * 100) if total_sentiment > 0 else 0
+        negative_pct = (negative_count / total_sentiment * 100) if total_sentiment > 0 else 0
+        
+        # Calculate trend
+        sentiment_trend = "↗️ Improving" if len(sentiment_scores) > 1 and sentiment_scores.iloc[-1] > sentiment_scores.iloc[-2] else "↘️ Declining"
+        
+        # Calculate risk scores based on sentiment and content
+        violence_score = 75 if any('violence' in str(content).lower() for content in emails_df['content']) else 15
+        self_harm_score = 45 if any('harm' in str(content).lower() or 'hurt' in str(content).lower() for content in emails_df['content']) else 10
+        sexual_score = 15 if any('sexual' in str(content).lower() or 'inappropriate' in str(content).lower() for content in emails_df['content']) else 5
+        
+    except Exception as e:
+        st.error(f"Error loading email data: {str(e)}")
+        total_emails = 0
+        today_emails = 0
+        avg_sentiment = 0
+        sentiment_trend = "↘️ Declining"
+        positive_pct = 0
+        neutral_pct = 0
+        negative_pct = 0
+        violence_score = 0
+        self_harm_score = 0
+        sexual_score = 0
+
     # Main content based on selected view
     if st.session_state.parent_view == 'overview':
         st.title("📊 Overview")
-        st.markdown("""
+        st.markdown(f"""
         <div style='background:#23272b; padding:2em; border-radius:10px; color:#fff;'>
             <h2>Activity Overview</h2>
             <div style='display: grid; grid-template-columns: repeat(3, 1fr); gap: 1em; margin-top: 1em;'>
                 <div style='background:#2d333b; padding:1em; border-radius:8px;'>
                     <h3>📧 Emails</h3>
-                    <p>Total: 24</p>
-                    <p>Today: 3</p>
+                    <p>Total: {total_emails}</p>
+                    <p>Today: {today_emails}</p>
                 </div>
                 <div style='background:#2d333b; padding:1em; border-radius:8px;'>
                     <h3>⏰ Screen Time</h3>
@@ -486,8 +563,8 @@ def parent_dashboard():
                 </div>
                 <div style='background:#2d333b; padding:1em; border-radius:8px;'>
                     <h3>🔍 Safety Score</h3>
-                    <p>Current: 92/100</p>
-                    <p>Trend: ↗️ Improving</p>
+                    <p>Current: {avg_sentiment:.1f}/10</p>
+                    <p>Trend: {sentiment_trend}</p>
                 </div>
             </div>
         </div>
@@ -501,19 +578,37 @@ def parent_dashboard():
         
         with col1:
             st.markdown("### ⚠️ Risk Assessment")
+            
+            # Violence risk
+            violence_level, violence_color = get_risk_level(violence_score)
             st.write("**Violence**")
-            st.progress(75)
-            st.markdown("<span style='color:#ff6b6b;'>High (75%)</span>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div style='background:#1c1f23; height:8px; border-radius:4px; margin:0.5em 0;'>
+                <div style='background:{violence_color}; width:{violence_score}%; height:100%; border-radius:4px;'></div>
+            </div>
+            <span style='color:{violence_color};'>{violence_level} ({violence_score}%)</span>
+            """, unsafe_allow_html=True)
 
+            # Self-harm risk
+            self_harm_level, self_harm_color = get_risk_level(self_harm_score)
             st.write("**Self-harm**")
-            st.progress(45)
-            st.markdown("<span style='color:#ffd93d;'>Medium (45%)</span>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div style='background:#1c1f23; height:8px; border-radius:4px; margin:0.5em 0;'>
+                <div style='background:{self_harm_color}; width:{self_harm_score}%; height:100%; border-radius:4px;'></div>
+            </div>
+            <span style='color:{self_harm_color};'>{self_harm_level} ({self_harm_score}%)</span>
+            """, unsafe_allow_html=True)
 
+            # Sexual content risk
+            sexual_level, sexual_color = get_risk_level(sexual_score)
             st.write("**Sexual Content**")
-            st.progress(15)
-            st.markdown("<span style='color:#4cd137;'>Low (15%)</span>", unsafe_allow_html=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-        
+            st.markdown(f"""
+            <div style='background:#1c1f23; height:8px; border-radius:4px; margin:0.5em 0;'>
+                <div style='background:{sexual_color}; width:{sexual_score}%; height:100%; border-radius:4px;'></div>
+            </div>
+            <span style='color:{sexual_color};'>{sexual_level} ({sexual_score}%)</span>
+            """, unsafe_allow_html=True)
+
         with col2:
             st.markdown("""
             <div style='background:#23272b; padding:1.5em; border-radius:10px; color:#fff; height:100%;'>
@@ -539,19 +634,19 @@ def parent_dashboard():
             """, unsafe_allow_html=True)
         
         with col3:        
-            st.markdown("""
+            st.markdown(f"""
             <div style='background:#23272b; padding:1.5em; border-radius:10px; color:#fff; height:100%;'>
                 <h3>📊 Sentiment Analysis</h3>
                 <div style='margin-top:1em; text-align:center;'>
-                    <div style='font-size:2.5em; margin:0.2em 0; color:#4cd137;'>7.8</div>
+                    <div style='font-size:2.5em; margin:0.2em 0; color:#4cd137;'>{avg_sentiment:.1f}</div>
                     <div style='color:#b0b8c1; margin-bottom:1em;'>Overall Sentiment Score</div>
                     <div style='background:#1c1f23; height:8px; border-radius:4px; margin:1em 0;'>
-                        <div style='background:#4cd137; width:78%; height:100%; border-radius:4px;'></div>
+                        <div style='background:#4cd137; width:{avg_sentiment*10}%; height:100%; border-radius:4px;'></div>
                     </div>
                     <div style='text-align:left; margin-top:1em;'>
-                        <p>• Positive: 65%</p>
-                        <p>• Neutral: 25%</p>
-                        <p>• Negative: 10%</p>
+                        <p>• Positive: {positive_pct:.0f}%</p>
+                        <p>• Neutral: {neutral_pct:.0f}%</p>
+                        <p>• Negative: {negative_pct:.0f}%</p>
                     </div>
                 <span style='color:#b0b8c1; font-size:0.98em;'>
                     The scores below represent the estimated probability that the student has been exposed to or engaged in each category based on recent email activity. Higher scores indicate greater risk and may warrant closer attention.
@@ -648,3 +743,35 @@ else:
         parent_dashboard()
     else:
         inbox_page()
+
+def display_email(email):
+    st.write(f"**From:** {email['from']}")
+    st.write(f"**To:** {email['to']}")
+    st.write(f"**Subject:** {email['subject']}")
+    st.write(f"**Date:** {email['date']}")
+    
+    # Display sentiment analysis
+    if pd.notna(email['sentiment_score']):
+        sentiment_score = email['sentiment_score']
+        sentiment_color = 'green' if sentiment_score > 0 else 'red' if sentiment_score < 0 else 'gray'
+        sentiment_text = 'Positive' if sentiment_score > 0 else 'Negative' if sentiment_score < 0 else 'Neutral'
+        st.markdown(f"**Sentiment:** <span style='color:{sentiment_color}'>{sentiment_text} ({sentiment_score:.2f})</span>", unsafe_allow_html=True)
+    
+    st.write("**Content:**")
+    st.write(email['content'])
+    
+    # Add action buttons
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("Reply", key=f"reply_{email.name}"):
+            st.session_state['reply_to'] = email
+            st.session_state['current_page'] = 'compose'
+    with col2:
+        if st.button("Forward", key=f"forward_{email.name}"):
+            st.session_state['forward_email'] = email
+            st.session_state['current_page'] = 'compose'
+    with col3:
+        if st.button("Delete", key=f"delete_{email.name}"):
+            move_to_trash(email.name)
+            st.success("Email moved to trash!")
+            st.experimental_rerun()

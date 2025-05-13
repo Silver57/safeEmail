@@ -7,11 +7,16 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
 from transformers import pipeline
+import openai
+from typing import List, Dict
 
 # Initialize sentiment analysis pipeline
 @st.cache_resource
 def load_sentiment_analyzer():
     return pipeline("sentiment-analysis", model="siebert/sentiment-roberta-large-english")
+
+# Initialize OpenAI client
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 def analyze_email_sentiment(content):
     try:
@@ -28,8 +33,8 @@ def analyze_email_sentiment(content):
         return None
 
 # SMTP Configuration
-SMTP_USERNAME = "senhor.frogs.racing@sapo.pt"
-SMTP_PASSWORD = "Nazare2024!"
+SMTP_USERNAME = st.secrets["SMTP_USERNAME"]
+SMTP_PASSWORD = st.secrets["SMTP_PASSWORD"]
 SMTP_SERVER = "smtp.sapo.pt"
 SMTP_PORT = 587
 
@@ -40,50 +45,56 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for dark, high-contrast, modern inbox style
+# Custom CSS for kid-friendly, modern inbox style
 st.markdown("""
     <style>
     body, .main, .block-container {
-        background-color: #181c1f !important;
-        color: #f5f6fa !important;
+        background-color: #E8F4FF !important;
+        color: #1A365D !important;
     }
     .stApp {
-        background-color: #181c1f !important;
+        background-color: #E8F4FF !important;
     }
     .stButton>button {
         width: 100%;
-        background-color: #2d333b;
-        color: #f5f6fa;
-        padding: 10px;
+        background-color: #4A90E2;
+        color: #FFFFFF;
+        padding: 12px;
         border: none;
-        border-radius: 6px;
+        border-radius: 12px;
         cursor: pointer;
         font-size: 1.1em;
         margin-bottom: 8px;
         text-align: left;
-    }
-    .stButton>button.selected {
-        background: #2962ff !important;
-        color: #fff !important;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .stButton>button:hover {
-        background-color: #444c56;
+        background-color: #357ABD;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .stButton>button.selected {
+        background: #2E86C1 !important;
+        color: #fff !important;
     }
     .sidebar .sidebar-content, .css-1d391kg, .css-1lcbmhc {
-        background-color: #23272b !important;
-        color: #f5f6fa !important;
+        background-color: #FFFFFF !important;
+        color: #1A365D !important;
+        border-right: 2px solid #E8F4FF;
     }
     .email-list {
-        background: #23272b;
-        border-radius: 10px;
+        background: #FFFFFF;
+        border-radius: 16px;
         padding: 0;
         margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
     .email-dot {
         display: inline-block;
-        width: 10px;
-        height: 10px;
-        background: #2196f3;
+        width: 12px;
+        height: 12px;
+        background: #4A90E2;
         border-radius: 50%;
         margin-right: 10px;
         margin-bottom: 2px;
@@ -96,15 +107,15 @@ st.markdown("""
     .email-sender {
         font-weight: bold;
         font-size: 1.1em;
-        color: #fff;
+        color: #1A365D;
     }
     .email-subject {
         font-size: 1.05em;
-        color: #f5f6fa;
+        color: #1A365D;
         font-weight: 500;
     }
     .email-preview {
-        color: #b0b8c1;
+        color: #4A5568;
         font-size: 0.98em;
         margin-top: 2px;
         white-space: nowrap;
@@ -113,30 +124,163 @@ st.markdown("""
         max-width: 80vw;
     }
     .email-time {
-        color: #b0b8c1;
+        color: #4A5568;
         font-size: 0.95em;
         margin-left: 16px;
         min-width: 60px;
         text-align: right;
     }
     .compose-button {
-        background-color: #ff9800 !important;
+        background-color: #4A90E2 !important;
         color: white !important;
         font-size: 1.2em !important;
         padding: 15px !important;
         margin: 10px 0 !important;
-        border-radius: 8px !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
     }
     .compose-button:hover {
-        background-color: #f57c00 !important;
+        background-color: #357ABD !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 8px rgba(0,0,0,0.15) !important;
     }
     .email-detail-box {
-        background: #23272b;
-        border-radius: 10px;
+        background: #FFFFFF;
+        border-radius: 16px;
         padding: 24px;
         margin-top: 10px;
-        color: #fff;
-        border: 1px solid #2d333b;
+        color: #1A365D;
+        border: 2px solid #E8F4FF;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    /* Text input styling */
+    .stTextInput>div>div>input {
+        border-radius: 12px !important;
+        border: 2px solid #E8F4FF !important;
+        padding: 12px !important;
+        background-color: #FFFFFF !important;
+        color: #1A365D !important;
+    }
+    .stTextInput>div>div>input::placeholder {
+        color: #718096 !important;
+    }
+    .stTextArea>div>div>textarea {
+        border-radius: 12px !important;
+        border: 2px solid #E8F4FF !important;
+        padding: 12px !important;
+        background-color: #FFFFFF !important;
+        color: #1A365D !important;
+    }
+    .stTextArea>div>div>textarea::placeholder {
+        color: #718096 !important;
+    }
+    /* Form styling */
+    .stForm {
+        background: #FFFFFF;
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    /* Chat message styling */
+    .chat-message {
+        margin: 10px 0;
+        padding: 15px;
+        border-radius: 16px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .chat-message.user {
+        background: #4A90E2;
+        color: #FFFFFF;
+        margin-left: 20%;
+    }
+    .chat-message.assistant {
+        background: #FFFFFF;
+        color: #1A365D;
+        margin-right: 20%;
+        border: 2px solid #E8F4FF;
+    }
+    /* Label styling */
+    .stMarkdown p {
+        color: #1A365D !important;
+    }
+    .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
+        color: #1A365D !important;
+    }
+    /* Selectbox styling */
+    .stSelectbox>div>div>select {
+        background-color: #FFFFFF !important;
+        color: #1A365D !important;
+        border: 2px solid #E8F4FF !important;
+        border-radius: 12px !important;
+        padding: 8px !important;
+    }
+    /* Error message styling */
+    .stAlert {
+        background-color: #FED7D7 !important;
+        color: #C53030 !important;
+        border-radius: 12px !important;
+        padding: 12px !important;
+    }
+    /* Success message styling */
+    .stSuccess {
+        background-color: #C6F6D5 !important;
+        color: #2F855A !important;
+        border-radius: 12px !important;
+        padding: 12px !important;
+    }
+    /* Tab styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2px;
+        background-color: #E8F4FF;
+        padding: 4px;
+        border-radius: 12px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        white-space: pre-wrap;
+        background-color: #FFFFFF;
+        border-radius: 10px;
+        color: #1A365D;
+        font-size: 1.1em;
+        font-weight: 500;
+        padding: 0 20px;
+        margin: 0 2px;
+        transition: all 0.3s ease;
+    }
+    
+    .stTabs [data-baseweb="tab"]:hover {
+        background-color: #F0F7FF;
+        color: #4A90E2;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background-color: #4A90E2 !important;
+        color: #FFFFFF !important;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .stTabs [data-baseweb="tab-panel"] {
+        padding: 20px 0;
+    }
+    
+    /* Tab content styling */
+    .stTabs [data-baseweb="tab-panel"] > div {
+        background-color: #FFFFFF;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    
+    /* Tab icons */
+    .stTabs [data-baseweb="tab"]::before {
+        content: "🔒";
+        margin-right: 8px;
+    }
+    
+    .stTabs [data-baseweb="tab"]:nth-child(2)::before {
+        content: "✨";
     }
     </style>
     """, unsafe_allow_html=True)
@@ -475,20 +619,59 @@ def get_risk_level(score):
     else:
         return "Low", "#4cd137"
 
+def get_chatgpt_response(messages: List[Dict[str, str]]) -> str:
+    """
+    Get a response from ChatGPT for the Smart Parenting chat.
+    """
+    try:
+        # Add system message with context and guardrails
+        system_message = {
+            "role": "system",
+            "content": """You are a helpful and empathetic parenting assistant focused on digital safety and child development. 
+            Your role is to provide guidance while maintaining appropriate boundaries:
+            
+            1. Always prioritize child safety and wellbeing
+            2. Provide evidence-based advice when possible
+            3. Be supportive and non-judgmental
+            4. Avoid giving medical or legal advice
+            5. Encourage professional help when appropriate
+            6. Focus on practical, actionable suggestions
+            7. Consider age-appropriate recommendations
+            8. Emphasize open communication and trust
+            9. Promote healthy digital habits
+            10. Respect cultural and family differences
+            
+            Keep responses concise, clear, and focused on the specific question asked."""
+        }
+        
+        # Add system message to the beginning of the conversation
+        messages_with_context = [system_message] + messages
+        
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages_with_context,
+            temperature=0.7,
+            max_tokens=500
+        )
+        
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"I apologize, but I'm having trouble connecting to my knowledge base right now. Please try again later. Error: {str(e)}"
+
 def parent_dashboard():
     # Sidebar navigation
     with st.sidebar:
         st.title("👨‍👩‍👧‍👦 Parent Dashboard")
         st.markdown("---")
         
-        # Navigation buttons
-        if st.button("📊 Overview", use_container_width=True):
+        # Navigation buttons with cute icons
+        if st.button("📊 Activity Overview", use_container_width=True):
             st.session_state.parent_view = 'overview'
             st.rerun()
-        if st.button("❤️ Wellbeing", use_container_width=True):
+        if st.button("❤️ Wellbeing Check", use_container_width=True):
             st.session_state.parent_view = 'wellbeing'
             st.rerun()
-        if st.button("🧠 Smart Parenting", use_container_width=True):
+        if st.button("🧠 Smart Parenting Helper", use_container_width=True):
             st.session_state.parent_view = 'smart_parenting'
             st.rerun()
         
@@ -546,22 +729,22 @@ def parent_dashboard():
 
     # Main content based on selected view
     if st.session_state.parent_view == 'overview':
-        st.title("📊 Overview")
+        st.title("📊 Activity Overview")
         st.markdown(f"""
-        <div style='background:#23272b; padding:2em; border-radius:10px; color:#fff;'>
-            <h2>Activity Overview</h2>
+        <div style='background:#FFFFFF; padding:2em; border-radius:16px; color:#2C3E50; box-shadow: 0 4px 6px rgba(0,0,0,0.05);'>
+            <h2>📱 Daily Activity</h2>
             <div style='display: grid; grid-template-columns: repeat(3, 1fr); gap: 1em; margin-top: 1em;'>
-                <div style='background:#2d333b; padding:1em; border-radius:8px;'>
+                <div style='background:#E8F4FF; padding:1.5em; border-radius:12px;'>
                     <h3>📧 Emails</h3>
                     <p>Total: {total_emails}</p>
                     <p>Today: {today_emails}</p>
                 </div>
-                <div style='background:#2d333b; padding:1em; border-radius:8px;'>
+                <div style='background:#E8F4FF; padding:1.5em; border-radius:12px;'>
                     <h3>⏰ Screen Time</h3>
                     <p>Today: 2h 15m</p>
                     <p>Weekly Avg: 1h 45m</p>
                 </div>
-                <div style='background:#2d333b; padding:1em; border-radius:8px;'>
+                <div style='background:#E8F4FF; padding:1.5em; border-radius:12px;'>
                     <h3>🔍 Safety Score</h3>
                     <p>Current: {avg_sentiment:.1f}/10</p>
                     <p>Trend: {sentiment_trend}</p>
@@ -571,20 +754,20 @@ def parent_dashboard():
         """, unsafe_allow_html=True)
 
     elif st.session_state.parent_view == 'wellbeing':
-        st.title("❤️ Wellbeing")
+        st.title("❤️ Wellbeing Check")
         
         # Create three columns for the modules
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            st.markdown("### ⚠️ Risk Assessment")
+            st.markdown("### ⚠️ Safety Check")
             
             # Violence risk
             violence_level, violence_color = get_risk_level(violence_score)
             st.write("**Violence**")
             st.markdown(f"""
-            <div style='background:#1c1f23; height:8px; border-radius:4px; margin:0.5em 0;'>
-                <div style='background:{violence_color}; width:{violence_score}%; height:100%; border-radius:4px;'></div>
+            <div style='background:#E8F4FF; height:12px; border-radius:6px; margin:0.5em 0;'>
+                <div style='background:{violence_color}; width:{violence_score}%; height:100%; border-radius:6px;'></div>
             </div>
             <span style='color:{violence_color};'>{violence_level} ({violence_score}%)</span>
             """, unsafe_allow_html=True)
@@ -593,8 +776,8 @@ def parent_dashboard():
             self_harm_level, self_harm_color = get_risk_level(self_harm_score)
             st.write("**Self-harm**")
             st.markdown(f"""
-            <div style='background:#1c1f23; height:8px; border-radius:4px; margin:0.5em 0;'>
-                <div style='background:{self_harm_color}; width:{self_harm_score}%; height:100%; border-radius:4px;'></div>
+            <div style='background:#E8F4FF; height:12px; border-radius:6px; margin:0.5em 0;'>
+                <div style='background:{self_harm_color}; width:{self_harm_score}%; height:100%; border-radius:6px;'></div>
             </div>
             <span style='color:{self_harm_color};'>{self_harm_level} ({self_harm_score}%)</span>
             """, unsafe_allow_html=True)
@@ -603,29 +786,29 @@ def parent_dashboard():
             sexual_level, sexual_color = get_risk_level(sexual_score)
             st.write("**Sexual Content**")
             st.markdown(f"""
-            <div style='background:#1c1f23; height:8px; border-radius:4px; margin:0.5em 0;'>
-                <div style='background:{sexual_color}; width:{sexual_score}%; height:100%; border-radius:4px;'></div>
+            <div style='background:#E8F4FF; height:12px; border-radius:6px; margin:0.5em 0;'>
+                <div style='background:{sexual_color}; width:{sexual_score}%; height:100%; border-radius:6px;'></div>
             </div>
             <span style='color:{sexual_color};'>{sexual_level} ({sexual_score}%)</span>
             """, unsafe_allow_html=True)
 
         with col2:
             st.markdown("""
-            <div style='background:#23272b; padding:1.5em; border-radius:10px; color:#fff; height:100%;'>
-                <h3>🎭 Communication Tone</h3>
+            <div style='background:#FFFFFF; padding:1.5em; border-radius:16px; color:#2C3E50; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height:100%;'>
+                <h3>🎭 Communication Style</h3>
                 <div style='margin-top:1em;'>
                     <div style='margin-bottom:1em;'>
-                        <h4 style='color:#b0b8c1; margin-bottom:0.5em;'>Overall Tone</h4>
-                        <p style='color:#4cd137;'>• Generally positive and respectful</p>
-                        <p style='color:#ffd93d;'>• Some instances of frustration</p>
+                        <h4 style='color:#4A90E2; margin-bottom:0.5em;'>Overall Tone</h4>
+                        <p style='color:#27AE60;'>• Generally positive and respectful</p>
+                        <p style='color:#F39C12;'>• Some instances of frustration</p>
                     </div>
                     <div style='margin-bottom:1em;'>
-                        <h4 style='color:#b0b8c1; margin-bottom:0.5em;'>Language Patterns</h4>
+                        <h4 style='color:#4A90E2; margin-bottom:0.5em;'>Language Patterns</h4>
                         <p>• Formal in academic contexts</p>
                         <p>• Casual with peers</p>
                     </div>
                     <div>
-                        <h4 style='color:#b0b8c1; margin-bottom:0.5em;'>Key Insights</h4>
+                        <h4 style='color:#4A90E2; margin-bottom:0.5em;'>Key Insights</h4>
                         <p>• Increased formality in recent weeks</p>
                         <p>• Improved conflict resolution</p>
                     </div>
@@ -635,32 +818,29 @@ def parent_dashboard():
         
         with col3:        
             st.markdown(f"""
-            <div style='background:#23272b; padding:1.5em; border-radius:10px; color:#fff; height:100%;'>
-                <h3>📊 Sentiment Analysis</h3>
+            <div style='background:#FFFFFF; padding:1.5em; border-radius:16px; color:#2C3E50; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height:100%;'>
+                <h3>📊 Mood Analysis</h3>
                 <div style='margin-top:1em; text-align:center;'>
-                    <div style='font-size:2.5em; margin:0.2em 0; color:#4cd137;'>{avg_sentiment:.1f}</div>
-                    <div style='color:#b0b8c1; margin-bottom:1em;'>Overall Sentiment Score</div>
-                    <div style='background:#1c1f23; height:8px; border-radius:4px; margin:1em 0;'>
-                        <div style='background:#4cd137; width:{avg_sentiment*10}%; height:100%; border-radius:4px;'></div>
+                    <div style='font-size:2.5em; margin:0.2em 0; color:#4A90E2;'>{avg_sentiment:.1f}</div>
+                    <div style='color:#7F8C8D; margin-bottom:1em;'>Overall Mood Score</div>
+                    <div style='background:#E8F4FF; height:12px; border-radius:6px; margin:1em 0;'>
+                        <div style='background:#4A90E2; width:{avg_sentiment*10}%; height:100%; border-radius:6px;'></div>
                     </div>
                     <div style='text-align:left; margin-top:1em;'>
                         <p>• Positive: {positive_pct:.0f}%</p>
                         <p>• Neutral: {neutral_pct:.0f}%</p>
                         <p>• Negative: {negative_pct:.0f}%</p>
                     </div>
-                <span style='color:#b0b8c1; font-size:0.98em;'>
-                    The scores below represent the estimated probability that the student has been exposed to or engaged in each category based on recent email activity. Higher scores indicate greater risk and may warrant closer attention.
-                </span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
     elif st.session_state.parent_view == 'smart_parenting':
-        st.title("🧠 Smart Parenting")
+        st.title("🧠 Smart Parenting Helper")
         st.markdown("""
-        <div style='background:#23272b; padding:2em; border-radius:10px; color:#fff;'>
-            <h2>Smart Parenting Assistant</h2>
-            <p style='color:#b0b8c1;'>Ask questions and get tips on how to help your child thrive online and offline.</p>
+        <div style='background:#FFFFFF; padding:2em; border-radius:16px; color:#2C3E50; box-shadow: 0 4px 6px rgba(0,0,0,0.05);'>
+            <h2>👨‍👩‍👧‍👦 Parenting Assistant</h2>
+            <p style='color:#7F8C8D;'>Ask questions and get tips on how to help your child thrive online and offline.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -672,10 +852,10 @@ def parent_dashboard():
 
         # Display chat history
         for msg in st.session_state.parent_chat_history:
-            if msg["role"] == "parent":
-                st.markdown(f"<div style='background:#2962ff; color:#fff; padding:0.7em 1em; border-radius:8px; margin:0.5em 0 0.5em auto; max-width:70%; text-align:right;'><b>You:</b> {msg['content']}</div>", unsafe_allow_html=True)
+            if msg["role"] == "user":
+                st.markdown(f"<div class='chat-message user'><b>You:</b> {msg['content']}</div>", unsafe_allow_html=True)
             else:
-                st.markdown(f"<div style='background:#23272b; color:#fff; padding:0.7em 1em; border-radius:8px; margin:0.5em auto 0.5em 0; max-width:70%; text-align:left; border:1px solid #444c56;'><b>Assistant:</b> {msg['content']}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='chat-message assistant'><b>Assistant:</b> {msg['content']}</div>", unsafe_allow_html=True)
 
         # Input for new question
         with st.form(key="parent_chat_form", clear_on_submit=True):
@@ -683,51 +863,42 @@ def parent_dashboard():
             submitted = st.form_submit_button("Send")
             if submitted and user_input.strip():
                 # Add parent message
-                st.session_state.parent_chat_history.append({"role": "parent", "content": user_input.strip()})
-                # Generate a simple tip/response (placeholder logic)
-                response = generate_parenting_tip(user_input.strip())
+                st.session_state.parent_chat_history.append({"role": "user", "content": user_input.strip()})
+                # Get response from ChatGPT
+                response = get_chatgpt_response(st.session_state.parent_chat_history)
                 st.session_state.parent_chat_history.append({"role": "assistant", "content": response})
                 st.rerun()
-
-# Helper function for parenting tips
-
-def generate_parenting_tip(question):
-    # Placeholder: simple keyword-based tips
-    q = question.lower()
-    if "screen time" in q:
-        return "It's important to set healthy boundaries for screen time. Consider creating device-free zones and times at home."
-    elif "bullying" in q:
-        return "If you suspect bullying, encourage open communication and reassure your child that they can talk to you about anything."
-    elif "internet safety" in q or "online safety" in q:
-        return "Teach your child about privacy, not sharing personal info, and how to recognize suspicious online behavior."
-    elif "motivation" in q or "study" in q:
-        return "Help your child set achievable goals and celebrate their progress. A consistent routine can boost motivation."
-    elif "friend" in q or "social" in q:
-        return "Encourage positive social interactions and help your child navigate friendships with empathy and respect."
-    else:
-        return "That's a great question! Encourage open dialogue, set clear expectations, and support your child's growth. If you have a specific concern, let me know!"
 
 # Main app logic
 if not st.session_state.authenticated:
     st.title("🔒 SafeEmail")
-    # Create tabs for Login and Register
+    # Create tabs for Login and Register with custom styling
     tab1, tab2 = st.tabs(["Login", "Register"])
+    
     with tab1:
-        st.header("Login")
+        st.markdown("""
+        <div style='background:#FFFFFF; padding:24px; border-radius:16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);'>
+            <h2 style='color:#1A365D; margin-bottom:20px;'>Welcome Back!</h2>
+        """, unsafe_allow_html=True)
         login_email = st.text_input("Email", key="login_email")
         login_password = st.text_input("Password", type="password", key="login_password")
-        if st.button("Login"):
+        if st.button("Login", use_container_width=True):
             if login(login_email, login_password):
                 st.success("Login successful!")
                 st.rerun()
             else:
                 st.error("Invalid email or password")
+        st.markdown("</div>", unsafe_allow_html=True)
+        
     with tab2:
-        st.header("Register")
+        st.markdown("""
+        <div style='background:#FFFFFF; padding:24px; border-radius:16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);'>
+            <h2 style='color:#1A365D; margin-bottom:20px;'>Create Account</h2>
+        """, unsafe_allow_html=True)
         register_email = st.text_input("Email", key="register_email")
         register_password = st.text_input("Password", type="password", key="register_password")
         confirm_password = st.text_input("Confirm Password", type="password", key="confirm_password")
-        if st.button("Register"):
+        if st.button("Register", use_container_width=True):
             if register_password != confirm_password:
                 st.error("Passwords do not match")
             else:
@@ -737,6 +908,7 @@ if not st.session_state.authenticated:
                     st.rerun()
                 else:
                     st.error(message)
+        st.markdown("</div>", unsafe_allow_html=True)
 else:
     # Show parent dashboard if email ends with @parent.com
     if st.session_state.current_user and st.session_state.current_user.endswith("@parent.com"):

@@ -228,60 +228,6 @@ st.markdown("""
         border-radius: 12px !important;
         padding: 12px !important;
     }
-    /* Tab styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 2px;
-        background-color: #E8F4FF;
-        padding: 4px;
-        border-radius: 12px;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        white-space: pre-wrap;
-        background-color: #FFFFFF;
-        border-radius: 10px;
-        color: #1A365D;
-        font-size: 1.1em;
-        font-weight: 500;
-        padding: 0 20px;
-        margin: 0 2px;
-        transition: all 0.3s ease;
-    }
-    
-    .stTabs [data-baseweb="tab"]:hover {
-        background-color: #F0F7FF;
-        color: #4A90E2;
-    }
-    
-    .stTabs [aria-selected="true"] {
-        background-color: #4A90E2 !important;
-        color: #FFFFFF !important;
-        font-weight: 600;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .stTabs [data-baseweb="tab-panel"] {
-        padding: 20px 0;
-    }
-    
-    /* Tab content styling */
-    .stTabs [data-baseweb="tab-panel"] > div {
-        background-color: #FFFFFF;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }
-    
-    /* Tab icons */
-    .stTabs [data-baseweb="tab"]::before {
-        content: "🔒";
-        margin-right: 8px;
-    }
-    
-    .stTabs [data-baseweb="tab"]:nth-child(2)::before {
-        content: "✨";
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -872,33 +818,24 @@ def parent_dashboard():
 # Main app logic
 if not st.session_state.authenticated:
     st.title("🔒 SafeEmail")
-    # Create tabs for Login and Register with custom styling
+    # Create tabs for Login and Register
     tab1, tab2 = st.tabs(["Login", "Register"])
-    
     with tab1:
-        st.markdown("""
-        <div style='background:#FFFFFF; padding:24px; border-radius:16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);'>
-            <h2 style='color:#1A365D; margin-bottom:20px;'>Welcome Back!</h2>
-        """, unsafe_allow_html=True)
+        st.header("Login")
         login_email = st.text_input("Email", key="login_email")
         login_password = st.text_input("Password", type="password", key="login_password")
-        if st.button("Login", use_container_width=True):
+        if st.button("Login"):
             if login(login_email, login_password):
                 st.success("Login successful!")
                 st.rerun()
             else:
                 st.error("Invalid email or password")
-        st.markdown("</div>", unsafe_allow_html=True)
-        
     with tab2:
-        st.markdown("""
-        <div style='background:#FFFFFF; padding:24px; border-radius:16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);'>
-            <h2 style='color:#1A365D; margin-bottom:20px;'>Create Account</h2>
-        """, unsafe_allow_html=True)
+        st.header("Register")
         register_email = st.text_input("Email", key="register_email")
         register_password = st.text_input("Password", type="password", key="register_password")
         confirm_password = st.text_input("Confirm Password", type="password", key="confirm_password")
-        if st.button("Register", use_container_width=True):
+        if st.button("Register"):
             if register_password != confirm_password:
                 st.error("Passwords do not match")
             else:
@@ -908,7 +845,6 @@ if not st.session_state.authenticated:
                     st.rerun()
                 else:
                     st.error(message)
-        st.markdown("</div>", unsafe_allow_html=True)
 else:
     # Show parent dashboard if email ends with @parent.com
     if st.session_state.current_user and st.session_state.current_user.endswith("@parent.com"):

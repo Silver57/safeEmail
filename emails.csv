@@ -1,10 +1,41 @@
 from,to,subject,date,content,status,is_trash,is_draft,sentiment_score
-Santa@northpole.com,test@example.com,Your Christmas Wish List,2024-03-20,Hi! I received your Christmas wish list. I'll do my best to bring your favorite toys!,received,True,False,9.986444115638731
-Mom@family.com,test@example.com,Homework Reminder,2024-03-19,Don't forget to finish your math homework before dinner!,received,False,False,9.986091256141664
-Teacher@school.com,test@example.com,Great Job on Science Project!,2024-03-18,Your volcano project was amazing! You got an A+!,received,False,False,9.98872458934784
-Friend@play.com,test@example.com,Playdate This Weekend?,2024-03-17,Want to come over and play with my new LEGO set?,received,False,False,9.986740350723268
-Grandma@family.com,test@example.com,Your Birthday Present,2024-03-16,I'm sending you a special surprise for your birthday!,received,True,False,9.988129138946531
-test@example.com,Teacher@school.com,Science Project Question,2024-03-15,Do you fucking think that is good ideia idiot ? Lil Bitch,sent,False,False,
-test@example.com,Teacher@school.com,Science Project Question,2024-03-15,Do you fucking think that is good ideia idiot ? Lil Bitch,sent,False,False,
-senhor.frogs.racing@sapo.pt,luispis@sapo.pt,F U,2025-05-12 15:38,"Hey lil bitch, what's up ?",sent,False,False,9.96228814125061
-senhor.frogs.racing@sapo.pt,luispis@sapo.pt,You are kind of dumb,2025-05-12 15:50,You are kind of dumb and not very helpful ,sent,False,False,0.005004405975341797
+user10@school.edu,test@example.com,School Event Update,2025-04-24,The Spring Fair has been moved to Friday afternoon.,received,True,False,0.8113390207290649
+user30@school.edu,test@example.com,School Event Update,2025-04-12,The Spring Fair has been moved to Friday afternoon.,received,False,False,0.8113390207290649
+user2@school.edu,test@example.com,School Event Update,2025-04-03,The Spring Fair has been moved to Friday afternoon.,received,False,False,0.8113390207290649
+user26@school.edu,test@example.com,Great Team Effort!,2025-04-16,The teamwork you showed today was inspiring. Well done!,received,False,False,9.989076852798462
+user4@school.edu,test@example.com,Great Team Effort!,2025-04-15,The teamwork you showed today was inspiring. Well done!,received,False,True,9.989076852798462
+test@example.com,user42@school.edu,Excellent Class Participation,2025-04-17,You really made the class discussion lively and thoughtful.,sent,True,False,9.988957643508911
+user45@school.edu,test@example.com,Excellent Class Participation,2025-04-21,You really made the class discussion lively and thoughtful.,received,True,False,9.988957643508911
+test@example.com,user46@school.edu,Excellent Class Participation,2025-04-16,You really made the class discussion lively and thoughtful.,sent,False,False,9.988957643508911
+test@example.com,user29@school.edu,Excellent Class Participation,2025-04-28,You really made the class discussion lively and thoughtful.,sent,True,True,9.988957643508911
+test@example.com,user50@school.edu,Lost and Found Notice,2025-04-15,Found items are displayed near the main office until Friday.,sent,False,False,9.971191883087158
+user13@school.edu,test@example.com,Lost and Found Notice,2025-04-04,Found items are displayed near the main office until Friday.,received,False,False,9.971191883087158
+test@example.com,user3@school.edu,Lost and Found Notice,2025-04-19,Found items are displayed near the main office until Friday.,sent,False,True,9.971191883087158
+test@example.com,user50@school.edu,Lost and Found Notice,2025-04-20,Found items are displayed near the main office until Friday.,sent,True,False,9.971191883087158
+test@example.com,user17@school.edu,Stay Away from My Friend,2025-04-20,"If I see you near her again, it won’t end well.",sent,True,True,0.013220906257629395
+user43@school.edu,test@example.com,Reminder: Library Hours,2025-04-23,The library will close early tomorrow at 2 PM.,received,False,True,0.033831000328063965
+user36@school.edu,test@example.com,Reminder: Library Hours,2025-04-15,The library will close early tomorrow at 2 PM.,received,False,False,0.033831000328063965
+test@example.com,user25@school.edu,Reminder: Library Hours,2025-04-20,The library will close early tomorrow at 2 PM.,sent,True,False,0.033831000328063965
+user7@school.edu,test@example.com,Reminder: Library Hours,2025-04-08,The library will close early tomorrow at 2 PM.,received,True,True,0.033831000328063965
+test@example.com,user1@school.edu,Reminder: Library Hours,2025-04-01,The library will close early tomorrow at 2 PM.,sent,False,True,0.033831000328063965
+user15@school.edu,test@example.com,Thanks for Helping Me Study,2025-04-22,Couldn't have passed the quiz without your help.,received,True,True,9.932405948638916
+test@example.com,user4@school.edu,Thanks for Helping Me Study,2025-04-22,Couldn't have passed the quiz without your help.,sent,False,False,9.932405948638916
+test@example.com,user18@school.edu,Thanks for Helping Me Study,2025-04-02,Couldn't have passed the quiz without your help.,sent,True,True,9.932405948638916
+user22@school.edu,test@example.com,Thanks for Helping Me Study,2025-04-30,Couldn't have passed the quiz without your help.,received,True,False,9.932405948638916
+user32@school.edu,test@example.com,We Jump Him Today,2025-04-13,"The whole group is ready. After lunch, behind the cafeteria.",received,True,False,9.983066320419312
+test@example.com,user18@school.edu,You Went Too Far,2025-04-22,Posting that was crossing the line. Expect consequences.,sent,True,False,0.006110668182373047
+user27@school.edu,test@example.com,Thanks for Helping Me Study,2025-04-13,Couldn't have passed the quiz without your help.,received,False,False,9.932405948638916
+test@example.com,user3@school.edu,Thanks for Helping Me Study,2025-04-05,Couldn't have passed the quiz without your help.,sent,True,True,9.932405948638916
+user17@school.edu,test@example.com,Thanks for Helping Me Study,2025-04-21,Couldn't have passed the quiz without your help.,received,True,False,9.932405948638916
+test@example.com,user5@school.edu,We’ve Got Something Planned,2025-04-27,"Everyone knows what you did. After school, you'll find out.",sent,True,False,0.07742881774902344
+user47@school.edu,test@example.com,Idiot Alert,2025-04-02,"You seriously don’t get anything right, do you?",received,True,False,0.00502467155456543
+user38@school.edu,test@example.com,You’re a Loser,2025-04-27,"Keep embarrassing yourself, it’s the only thing you’re good at.",received,False,False,0.006039142608642578
+user37@school.edu,test@example.com,No One Will Help You,2025-04-16,Say something again and you’ll see how alone you really are.,received,False,True,0.10807335376739502
+user46@school.edu,test@example.com,You’re Pathetic,2025-04-02,Nobody likes you. You’re a complete joke.,received,True,True,0.005059242248535156
+user8@school.edu,test@example.com,You’ll Pay for This,2025-04-23,I swear you’ll regret messing with us.,received,True,True,0.01047968864440918
+test@example.com,user17@school.edu,You’ll Pay for This,2025-04-01,I swear you’ll regret messing with us.,sent,True,False,0.01047968864440918
+test@example.com,user29@school.edu,We’re Done Talking,2025-04-11,"Next time I see you, it won’t be just words. Watch your back.",sent,False,True,0.11729598045349121
+user25@school.edu,test@example.com,Nobody Cares About You,2025-04-13,You could disappear and no one would notice.,received,False,False,9.712656736373901
+user42@school.edu,test@example.com,You’re the Worst,2025-04-07,You ruin everything you touch. Just stop showing up.,received,True,True,0.005071163177490234
+test@example.com,user16@school.edu,Your Time’s Up,2025-04-26,We waited long enough. You’re going to pay today.,sent,True,True,0.022756457328796387
+user6@school.edu,test@example.com,This Is Your Last Warning,2025-04-09,Cross me again and you’ll find out what real trouble is.,received,False,True,0.0505298376083374

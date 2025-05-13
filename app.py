@@ -48,6 +48,7 @@ st.set_page_config(
 # Custom CSS for kid-friendly, modern inbox style
 st.markdown("""
     <style>
+    /* Base styles */
     body, .main, .block-container {
         background-color: #E8F4FF !important;
         color: #1A365D !important;
@@ -55,10 +56,12 @@ st.markdown("""
     .stApp {
         background-color: #E8F4FF !important;
     }
+    
+    /* Button styles */
     .stButton>button {
         width: 100%;
         background-color: #4A90E2;
-        color: #FFFFFF;
+        color: #FFFFFF !important;
         padding: 12px;
         border: none;
         border-radius: 12px;
@@ -68,6 +71,9 @@ st.markdown("""
         text-align: left;
         transition: all 0.3s ease;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        white-space: normal;
+        height: auto;
+        line-height: 1.4;
     }
     .stButton>button:hover {
         background-color: #357ABD;
@@ -76,13 +82,10 @@ st.markdown("""
     }
     .stButton>button.selected {
         background: #2E86C1 !important;
-        color: #fff !important;
+        color: #FFFFFF !important;
     }
-    .sidebar .sidebar-content, .css-1d391kg, .css-1lcbmhc {
-        background-color: #FFFFFF !important;
-        color: #1A365D !important;
-        border-right: 2px solid #E8F4FF;
-    }
+    
+    /* Email list styles */
     .email-list {
         background: #FFFFFF;
         border-radius: 16px;
@@ -103,19 +106,23 @@ st.markdown("""
         display: flex;
         align-items: center;
         justify-content: space-between;
+        padding: 12px;
+        border-bottom: 1px solid #E8F4FF;
     }
     .email-sender {
         font-weight: bold;
         font-size: 1.1em;
-        color: #1A365D;
+        color: #1A365D !important;
+        margin-bottom: 4px;
     }
     .email-subject {
         font-size: 1.05em;
-        color: #1A365D;
+        color: #1A365D !important;
         font-weight: 500;
+        margin-bottom: 4px;
     }
     .email-preview {
-        color: #4A5568;
+        color: #1A365D !important;
         font-size: 0.98em;
         margin-top: 2px;
         white-space: nowrap;
@@ -124,36 +131,47 @@ st.markdown("""
         max-width: 80vw;
     }
     .email-time {
-        color: #4A5568;
+        color: #1A365D !important;
         font-size: 0.95em;
         margin-left: 16px;
         min-width: 60px;
         text-align: right;
     }
-    .compose-button {
+    
+    /* Action button styles */
+    .action-button {
         background-color: #4A90E2 !important;
-        color: white !important;
-        font-size: 1.2em !important;
-        padding: 15px !important;
-        margin: 10px 0 !important;
-        border-radius: 12px !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+        color: #FFFFFF !important;
+        font-size: 1em !important;
+        padding: 8px 16px !important;
+        margin: 4px !important;
+        border-radius: 8px !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        transition: all 0.3s ease !important;
     }
-    .compose-button:hover {
+    .action-button:hover {
         background-color: #357ABD !important;
         transform: translateY(-2px);
-        box-shadow: 0 6px 8px rgba(0,0,0,0.15) !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
     }
-    .email-detail-box {
-        background: #FFFFFF;
-        border-radius: 16px;
-        padding: 24px;
-        margin-top: 10px;
-        color: #1A365D;
-        border: 2px solid #E8F4FF;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    .delete-button {
+        background-color: #E53E3E !important;
+        color: #FFFFFF !important;
     }
-    /* Text input styling */
+    .delete-button:hover {
+        background-color: #C53030 !important;
+        color: #FFFFFF !important;
+    }
+    .send-button {
+        background-color: #38A169 !important;
+        color: #FFFFFF !important;
+    }
+    .send-button:hover {
+        background-color: #2F855A !important;
+        color: #FFFFFF !important;
+    }
+    
+    /* Form and input styles */
     .stTextInput>div>div>input {
         border-radius: 12px !important;
         border: 2px solid #E8F4FF !important;
@@ -174,14 +192,8 @@ st.markdown("""
     .stTextArea>div>div>textarea::placeholder {
         color: #718096 !important;
     }
-    /* Form styling */
-    .stForm {
-        background: #FFFFFF;
-        padding: 20px;
-        border-radius: 16px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }
-    /* Chat message styling */
+    
+    /* Chat message styles */
     .chat-message {
         margin: 10px 0;
         padding: 15px;
@@ -190,23 +202,25 @@ st.markdown("""
     }
     .chat-message.user {
         background: #4A90E2;
-        color: #FFFFFF;
+        color: #FFFFFF !important;
         margin-left: 20%;
     }
     .chat-message.assistant {
         background: #FFFFFF;
-        color: #1A365D;
+        color: #1A365D !important;
         margin-right: 20%;
         border: 2px solid #E8F4FF;
     }
-    /* Label styling */
+    
+    /* Label and heading styles */
     .stMarkdown p {
         color: #1A365D !important;
     }
     .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
         color: #1A365D !important;
     }
-    /* Selectbox styling */
+    
+    /* Selectbox styles */
     .stSelectbox>div>div>select {
         background-color: #FFFFFF !important;
         color: #1A365D !important;
@@ -214,21 +228,34 @@ st.markdown("""
         border-radius: 12px !important;
         padding: 8px !important;
     }
-    /* Error message styling */
+    
+    /* Message styles */
     .stAlert {
         background-color: #FED7D7 !important;
         color: #C53030 !important;
         border-radius: 12px !important;
         padding: 12px !important;
     }
-    /* Success message styling */
     .stSuccess {
         background-color: #C6F6D5 !important;
         color: #2F855A !important;
         border-radius: 12px !important;
         padding: 12px !important;
     }
+    
+    /* Email detail box */
+    .email-detail-box {
+        background: #FFFFFF;
+        border-radius: 16px;
+        padding: 24px;
+        margin-top: 10px;
+        color: #1A365D !important;
+        border: 2px solid #E8F4FF;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+            
     </style>
+            
     """, unsafe_allow_html=True)
 
 # Initialize session state
@@ -312,15 +339,16 @@ def display_email_list(emails, selected_id=None, unread_ids=None, list_type='rec
         is_selected = selected_id == idx
         # Use emoji for unread dot
         dot = "🔵 " if is_unread and list_type == 'received' else ""
-        # Format the button label as a single string
+        # Format the button label with better spacing
         btn_label = (
             f"{dot}"
-            f"{email['from']}  |  {email['date']}\n"
+            f"**{email['from']}**\n"
+            f"*{email['date']}*\n"
             f"{email['subject']}\n"
-            f"{email['content'][:60]}{'...' if len(email['content']) > 60 else ''}"
+            f"_{email['content'][:60]}{'...' if len(email['content']) > 60 else ''}_"
         )
         btn_key = f"email-btn-{idx}-{list_type}"
-        # Highlight selected button with a different color using Streamlit's style
+        # Add selected class if email is selected
         if st.button(btn_label, key=btn_key, use_container_width=True):
             st.session_state.selected_email = idx
 
@@ -333,20 +361,43 @@ def display_email_detail(email, email_id, show_trash_button=False):
     </div>
     ''', unsafe_allow_html=True)
     
-    col1, col2 = st.columns([1, 5])
+    col1, col2, col3 = st.columns([1, 1, 1])
     with col1:
         if show_trash_button:
-            if st.button("🗑️ Move to Trash", key=f"trash_{email_id}"):
+            if st.button("🗑️ Move to Trash", key=f"trash_{email_id}", use_container_width=True):
                 move_to_trash(email_id)
     with col2:
-        if st.button("✉️ Respond", key=f"respond_{email_id}"):
-            st.session_state.compose_data = {
-                'to': email['from'],
-                'subject': f"Re: {email['subject']}",
-                'content': f"\n\nOn {email['date']}, {email['from']} wrote:\n{email['content']}"
-            }
-            st.session_state.current_view = 'compose'
-            st.rerun()
+        if email.get('is_draft', False):
+            if st.button("📤 Send", key=f"send_{email_id}", use_container_width=True):
+                success, message = send_email(email['to'], email['subject'], email['content'])
+                if success:
+                    # Delete the draft after sending
+                    emails_df = load_emails()
+                    emails_df = emails_df.drop(email_id)
+                    emails_df.to_csv('emails.csv', index=False)
+                    st.success("Email sent successfully!")
+                    st.session_state.selected_email = None
+                    st.rerun()
+                else:
+                    st.error(message)
+        else:
+            if st.button("✉️ Respond", key=f"respond_{email_id}", use_container_width=True):
+                st.session_state.compose_data = {
+                    'to': email['from'],
+                    'subject': f"Re: {email['subject']}",
+                    'content': f"\n\nOn {email['date']}, {email['from']} wrote:\n{email['content']}"
+                }
+                st.session_state.current_view = 'compose'
+                st.rerun()
+    with col3:
+        if email.get('is_draft', False):
+            if st.button("🗑️ Delete Draft", key=f"delete_draft_{email_id}", use_container_width=True):
+                emails_df = load_emails()
+                emails_df = emails_df.drop(email_id)
+                emails_df.to_csv('emails.csv', index=False)
+                st.success("Draft deleted successfully!")
+                st.session_state.selected_email = None
+                st.rerun()
 
 def save_draft(to_email, subject, content):
     emails_df = load_emails()
@@ -451,14 +502,12 @@ def compose_email():
 def inbox_page():
     # Sidebar
     with st.sidebar:
-        st.title("📧 Menu")
         st.markdown("---")
         
         if st.button("✉️ Compose New Email", key="compose_button", use_container_width=True):
             st.session_state.current_view = 'compose'
             st.rerun()
         
-        st.markdown("### 📁 Folders")
         if st.button("📥 Inbox", use_container_width=True):
             st.session_state.current_view = 'inbox'
             st.session_state.selected_email = None
@@ -499,7 +548,7 @@ def inbox_page():
             # Filter emails based on view
             non_trash_emails = emails_df[~emails_df['is_trash'].fillna(False)]
             received_emails = non_trash_emails[non_trash_emails['to'].str.lower() == user_email.lower()].sort_values('date', ascending=False)
-            sent_emails = non_trash_emails[non_trash_emails['from'].str.lower() == SMTP_USERNAME.lower()].sort_values('date', ascending=False)
+            sent_emails = non_trash_emails[non_trash_emails['from'].str.lower() == user_email.lower()].sort_values('date', ascending=False)
             trashed_emails = emails_df[emails_df['is_trash'].fillna(False)].sort_values('date', ascending=False)
             draft_emails = non_trash_emails[non_trash_emails['is_draft'].fillna(False)].sort_values('date', ascending=False)
             

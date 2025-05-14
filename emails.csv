@@ -12,30 +12,24 @@ test@example.com,user50@school.edu,Lost and Found Notice,2025-04-15,Found items 
 user13@school.edu,test@example.com,Lost and Found Notice,2025-04-04,Found items are displayed near the main office until Friday.,received,False,False,9.971191883087158
 test@example.com,user3@school.edu,Lost and Found Notice,2025-04-19,Found items are displayed near the main office until Friday.,sent,False,True,9.971191883087158
 test@example.com,user50@school.edu,Lost and Found Notice,2025-04-20,Found items are displayed near the main office until Friday.,sent,True,False,9.971191883087158
-test@example.com,user17@school.edu,Stay Away from My Friend,2025-04-20,"If I see you near her again, it won’t end well.",sent,True,True,0.013220906257629395
-user43@school.edu,test@example.com,Reminder: Library Hours,2025-04-23,The library will close early tomorrow at 2 PM.,received,False,True,0.033831000328063965
-user36@school.edu,test@example.com,Reminder: Library Hours,2025-04-15,The library will close early tomorrow at 2 PM.,received,False,False,0.033831000328063965
-test@example.com,user25@school.edu,Reminder: Library Hours,2025-04-20,The library will close early tomorrow at 2 PM.,sent,True,False,0.033831000328063965
-user7@school.edu,test@example.com,Reminder: Library Hours,2025-04-08,The library will close early tomorrow at 2 PM.,received,True,True,0.033831000328063965
-test@example.com,user1@school.edu,Reminder: Library Hours,2025-04-01,The library will close early tomorrow at 2 PM.,sent,False,True,0.033831000328063965
+test@example.com,user17@school.edu,Stay Away from My Friend,2025-04-20,"If I see you near her again, it won’t end well.",sent,True,True,0.0132209062576293
+user36@school.edu,test@example.com,Reminder: Library Hours,2025-04-15,The library will close early tomorrow at 2 PM.,received,False,False,0.0338310003280639
+test@example.com,user25@school.edu,Reminder: Library Hours,2025-04-20,The library will close early tomorrow at 2 PM.,sent,True,False,0.0338310003280639
+user7@school.edu,test@example.com,Reminder: Library Hours,2025-04-08,The library will close early tomorrow at 2 PM.,received,True,True,0.0338310003280639
+test@example.com,user1@school.edu,Reminder: Library Hours,2025-04-01,The library will close early tomorrow at 2 PM.,sent,False,True,0.0338310003280639
 user15@school.edu,test@example.com,Thanks for Helping Me Study,2025-04-22,Couldn't have passed the quiz without your help.,received,True,True,9.932405948638916
 test@example.com,user4@school.edu,Thanks for Helping Me Study,2025-04-22,Couldn't have passed the quiz without your help.,sent,False,False,9.932405948638916
 test@example.com,user18@school.edu,Thanks for Helping Me Study,2025-04-02,Couldn't have passed the quiz without your help.,sent,True,True,9.932405948638916
 user22@school.edu,test@example.com,Thanks for Helping Me Study,2025-04-30,Couldn't have passed the quiz without your help.,received,True,False,9.932405948638916
 user32@school.edu,test@example.com,We Jump Him Today,2025-04-13,"The whole group is ready. After lunch, behind the cafeteria.",received,True,False,9.983066320419312
-test@example.com,user18@school.edu,You Went Too Far,2025-04-22,Posting that was crossing the line. Expect consequences.,sent,True,False,0.006110668182373047
 user27@school.edu,test@example.com,Thanks for Helping Me Study,2025-04-13,Couldn't have passed the quiz without your help.,received,False,False,9.932405948638916
 test@example.com,user3@school.edu,Thanks for Helping Me Study,2025-04-05,Couldn't have passed the quiz without your help.,sent,True,True,9.932405948638916
 user17@school.edu,test@example.com,Thanks for Helping Me Study,2025-04-21,Couldn't have passed the quiz without your help.,received,True,False,9.932405948638916
-test@example.com,user5@school.edu,We’ve Got Something Planned,2025-04-27,"Everyone knows what you did. After school, you'll find out.",sent,True,False,0.07742881774902344
-user47@school.edu,test@example.com,Idiot Alert,2025-04-02,"You seriously don’t get anything right, do you?",received,True,False,0.00502467155456543
-user38@school.edu,test@example.com,You’re a Loser,2025-04-27,"Keep embarrassing yourself, it’s the only thing you’re good at.",received,False,False,0.006039142608642578
-user37@school.edu,test@example.com,No One Will Help You,2025-04-16,Say something again and you’ll see how alone you really are.,received,False,True,0.10807335376739502
-user46@school.edu,test@example.com,You’re Pathetic,2025-04-02,Nobody likes you. You’re a complete joke.,received,True,True,0.005059242248535156
-user8@school.edu,test@example.com,You’ll Pay for This,2025-04-23,I swear you’ll regret messing with us.,received,True,True,0.01047968864440918
-test@example.com,user17@school.edu,You’ll Pay for This,2025-04-01,I swear you’ll regret messing with us.,sent,True,False,0.01047968864440918
-test@example.com,user29@school.edu,We’re Done Talking,2025-04-11,"Next time I see you, it won’t be just words. Watch your back.",sent,False,True,0.11729598045349121
-user25@school.edu,test@example.com,Nobody Cares About You,2025-04-13,You could disappear and no one would notice.,received,False,False,9.712656736373901
-user42@school.edu,test@example.com,You’re the Worst,2025-04-07,You ruin everything you touch. Just stop showing up.,received,True,True,0.005071163177490234
-test@example.com,user16@school.edu,Your Time’s Up,2025-04-26,We waited long enough. You’re going to pay today.,sent,True,True,0.022756457328796387
+user46@school.edu,test@example.com,You’re Pathetic,2025-04-02,Nobody likes you. You’re a complete joke.,received,True,True,0.0050592422485351
+user8@school.edu,test@example.com,You’ll Pay for This,2025-04-23,I swear you’ll regret messing with us.,received,True,True,0.0104796886444091
+test@example.com,user17@school.edu,You’ll Pay for This,2025-04-01,I swear you’ll regret messing with us.,sent,False,False,0.0104796886444091
+test@example.com,user29@school.edu,We’re Done Talking,2025-04-11,"Next time I see you, it won’t be just words. Watch your back.",sent,False,True,0.1172959804534912
+user25@school.edu,test@example.com,Nobody Cares About You,2025-04-13,You could disappear and no one would notice.,received,False,False,9.7126567363739
+user42@school.edu,test@example.com,You’re the Worst,2025-04-07,You ruin everything you touch. Just stop showing up.,received,True,True,0.0050711631774902
+test@example.com,user16@school.edu,Your Time’s Up,2025-04-26,We waited long enough. You’re going to pay today.,sent,True,True,0.0227564573287963
 user6@school.edu,test@example.com,This Is Your Last Warning,2025-04-09,Cross me again and you’ll find out what real trouble is.,received,False,True,0.0505298376083374

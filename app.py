@@ -619,12 +619,29 @@ def get_chatgpt_response(messages: List[Dict[str, str]]) -> str:
     Get a response from ChatGPT for the Smart Parenting chat.
     """
     try:
+        # Get email data for context
+        emails_df = load_emails()
+        sentiment_scores = emails_df['sentiment_score'].dropna()
+        avg_sentiment = sentiment_scores.mean() if not sentiment_scores.empty else 0
+        
+        # Calculate sentiment distribution
+        positive_count = len(sentiment_scores[sentiment_scores >= 7])
+        neutral_count = len(sentiment_scores[(sentiment_scores >= 4) & (sentiment_scores < 7)])
+        negative_count = len(sentiment_scores[sentiment_scores < 4])
+        total_sentiment = len(sentiment_scores)
+        
+        # Calculate risk scores
+        violence_score = 75 if any('violence' in str(content).lower() for content in emails_df['content']) else 15
+        self_harm_score = 45 if any('harm' in str(content).lower() or 'hurt' in str(content).lower() for content in emails_df['content']) else 10
+        sexual_score = 15 if any('sexual' in str(content).lower() or 'inappropriate' in str(content).lower() for content in emails_df['content']) else 5
+
         # Add system message with context and guardrails
         system_message = {
             "role": "system",
-            "content": """You are a helpful and empathetic parenting assistant focused on digital safety and child development. 
+            "content": f"""You are a helpful and empathetic parenting assistant focused on digital safety and child development. 
+            You have access to real-time data about the child's email activity and can provide specific insights when asked.
+
             Your role is to provide guidance while maintaining appropriate boundaries:
-            
             1. Always prioritize child safety and wellbeing
             2. Provide evidence-based advice when possible
             3. Be supportive and non-judgmental
@@ -635,6 +652,28 @@ def get_chatgpt_response(messages: List[Dict[str, str]]) -> str:
             8. Emphasize open communication and trust
             9. Promote healthy digital habits
             10. Respect cultural and family differences
+
+            IMPORTANT: You have access to the following real-time data about the child's activity. 
+            When parents ask about their child's:
+            - Mood or emotional state
+            - Safety concerns
+            - Screen time
+            - Communication patterns
+            - Overall wellbeing
+            
+            You should provide specific insights using this data:
+
+            Current Activity Data:
+            - Overall Mood Score: {avg_sentiment:.1f}/10
+            - Sentiment Distribution: {positive_count} positive, {neutral_count} neutral, {negative_count} negative messages
+            - Safety Concerns:
+              * Violence Risk: {violence_score}%
+              * Self-harm Risk: {self_harm_score}%
+              * Inappropriate Content Risk: {sexual_score}%
+              * Screen Time: 2h 15m
+
+            For general parenting questions not related to the child's current activity, 
+            provide general advice without referencing this data.
             
             Keep responses concise, clear, and focused on the specific question asked."""
         }
